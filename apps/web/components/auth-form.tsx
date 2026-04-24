@@ -8,9 +8,23 @@ import { getSupabaseBrowserClient } from "../lib/supabase-browser";
 
 type AuthMode = "sign_in" | "sign_up";
 type AuthMethod = "email" | "sms";
+type AuthAudience = "customer" | "driver" | "food_place";
 
 type ProfileRow = {
   role: "customer" | "driver" | "food_place" | "admin";
+};
+
+type AuthFormProps = {
+  audience: AuthAudience;
+  badge: string;
+  title: string;
+  description: string;
+  infoTitle: string;
+  infoItems: string[];
+  homeHref?: string;
+  homeLabel?: string;
+  allowSignUp?: boolean;
+  allowedMethods?: AuthMethod[];
 };
 
 async function fetchUserRole(userId: string) {
@@ -28,11 +42,22 @@ async function fetchUserRole(userId: string) {
   return data?.role ?? "customer";
 }
 
-export function AuthForm() {
+export function AuthForm({
+  audience,
+  badge,
+  title,
+  description,
+  infoTitle,
+  infoItems,
+  homeHref = "/",
+  homeLabel = "Go back home",
+  allowSignUp = true,
+  allowedMethods = ["email", "sms"],
+}: AuthFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [mode, setMode] = useState<AuthMode>("sign_in");
-  const [method, setMethod] = useState<AuthMethod>("email");
+  const [method, setMethod] = useState<AuthMethod>(allowedMethods[0] ?? "email");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -86,10 +111,14 @@ export function AuthForm() {
           throw new Error("SMS verification completed, but no session was created.");
         }
 
-        const role = await fetchUserRole(user.id);
+          const role = await fetchUserRole(user.id);
         router.replace(getDashboardRoute(role));
         router.refresh();
         return;
+      }
+
+      if (mode === "sign_up" && !allowSignUp) {
+        throw new Error("New account registration is not available on this page.");
       }
 
       if (mode === "sign_up") {
@@ -148,6 +177,10 @@ export function AuthForm() {
   }
 
   function switchMethod(nextMethod: AuthMethod) {
+    if (!allowedMethods.includes(nextMethod)) {
+      return;
+    }
+
     setMethod(nextMethod);
     setOtpStep("request");
     setOtpCode("");
@@ -158,24 +191,18 @@ export function AuthForm() {
     <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
       <section className="space-y-6">
         <span className="inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-          Supabase auth starter
+          {badge}
         </span>
         <div className="space-y-4">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Sign in once, then route each user into the right Dalbo dashboard.
-          </h1>
-          <p className="max-w-2xl text-lg text-slate-600">
-            This web app now supports email auth, SMS OTP auth, and role-based dashboard routing
-            for customers, drivers, and food places.
-          </p>
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{title}</h1>
+          <p className="max-w-2xl text-lg text-slate-600">{description}</p>
         </div>
         <div className="rounded-3xl border border-orange-100 bg-white p-6 text-sm text-slate-600">
-          <p className="font-semibold text-slate-900">Before this page works:</p>
+          <p className="font-semibold text-slate-900">{infoTitle}</p>
           <ul className="mt-3 space-y-2">
-            <li>Add your Supabase URL and anon key to `apps/web/.env.local`.</li>
-            <li>Enable Twilio phone auth inside Supabase if you want SMS sign in.</li>
-            <li>Create users in Supabase Auth or sign up from this form.</li>
-            <li>Make sure each user has a row in `public.profiles` with a role.</li>
+            {infoItems.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
           </ul>
         </div>
       </section>
@@ -194,40 +221,44 @@ export function AuthForm() {
           >
             Sign in
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              setMode("sign_up");
-              resetMessages();
-            }}
-            className={`flex-1 rounded-full px-4 py-2 ${
-              mode === "sign_up" ? "bg-[#ff6200] text-white" : "text-slate-600"
-            }`}
-          >
-            Sign up
-          </button>
+          {allowSignUp ? (
+            <button
+              type="button"
+              onClick={() => {
+                setMode("sign_up");
+                resetMessages();
+              }}
+              className={`flex-1 rounded-full px-4 py-2 ${
+                mode === "sign_up" ? "bg-[#ff6200] text-white" : "text-slate-600"
+              }`}
+            >
+              Sign up
+            </button>
+          ) : null}
         </div>
 
-        <div className="mt-4 flex rounded-full bg-slate-100 p-1 text-sm font-medium">
-          <button
-            type="button"
-            onClick={() => switchMethod("email")}
-            className={`flex-1 rounded-full px-4 py-2 ${
-              method === "email" ? "bg-white text-slate-900" : "text-slate-600"
-            }`}
-          >
-            Email
-          </button>
-          <button
-            type="button"
-            onClick={() => switchMethod("sms")}
-            className={`flex-1 rounded-full px-4 py-2 ${
-              method === "sms" ? "bg-white text-slate-900" : "text-slate-600"
-            }`}
-          >
-            SMS code
-          </button>
-        </div>
+        {allowedMethods.length > 1 ? (
+          <div className="mt-4 flex rounded-full bg-slate-100 p-1 text-sm font-medium">
+            <button
+              type="button"
+              onClick={() => switchMethod("email")}
+              className={`flex-1 rounded-full px-4 py-2 ${
+                method === "email" ? "bg-white text-slate-900" : "text-slate-600"
+              }`}
+            >
+              Email
+            </button>
+            <button
+              type="button"
+              onClick={() => switchMethod("sms")}
+              className={`flex-1 rounded-full px-4 py-2 ${
+                method === "sms" ? "bg-white text-slate-900" : "text-slate-600"
+              }`}
+            >
+              SMS code
+            </button>
+          </div>
+        ) : null}
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           {mode === "sign_up" ? (
@@ -237,7 +268,13 @@ export function AuthForm() {
                 value={fullName}
                 onChange={(event) => setFullName(event.target.value)}
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
-                placeholder="Dalbo Owner"
+                placeholder={
+                  audience === "customer"
+                    ? "Your full name"
+                    : audience === "driver"
+                      ? "Driver full name"
+                      : "Business owner name"
+                }
                 required
               />
             </label>
@@ -252,7 +289,13 @@ export function AuthForm() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
-                  placeholder="name@dalbo.com"
+                  placeholder={
+                    audience === "customer"
+                      ? "customer@dalbo.app"
+                      : audience === "driver"
+                        ? "driver@dalbo.app"
+                        : "foodplace@dalbo.app"
+                  }
                   required
                 />
               </label>
@@ -323,8 +366,14 @@ export function AuthForm() {
                   ? "Send SMS code"
                   : "Verify code"
                 : mode === "sign_in"
-                  ? "Sign in to Dalbo"
-                  : "Create account"}
+                  ? audience === "customer"
+                    ? "Start ordering"
+                    : audience === "driver"
+                      ? "Driver sign in"
+                      : "Food Place sign in"
+                  : audience === "customer"
+                    ? "Create customer account"
+                    : "Create account"}
           </button>
 
           {method === "sms" && otpStep === "verify" ? (
@@ -343,9 +392,9 @@ export function AuthForm() {
         </form>
 
         <p className="mt-6 text-sm text-slate-500">
-          Need the landing page again?{" "}
-          <Link href="/" className="font-semibold text-orange-600">
-            Go back home
+          Need another entry point?{" "}
+          <Link href={homeHref} className="font-semibold text-orange-600">
+            {homeLabel}
           </Link>
         </p>
       </section>

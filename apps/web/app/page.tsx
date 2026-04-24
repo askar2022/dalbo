@@ -84,10 +84,10 @@ export default function HomePage() {
               Partner login
             </Link>
             <Link
-              href="/login"
+              href="/login/customer"
               className="rounded-2xl bg-[#ff6200] px-4 py-2 text-white transition hover:bg-[#e35700]"
             >
-              Get started
+              Start ordering
             </Link>
           </nav>
         </header>
@@ -110,16 +110,16 @@ export default function HomePage() {
 
             <div className="flex flex-wrap gap-3">
               <Link
-                href="/login"
+                href="/login/customer"
                 className="rounded-2xl bg-[#ff6200] px-6 py-3 text-base font-semibold text-white transition hover:bg-[#e35700]"
               >
                 Start ordering
               </Link>
               <Link
-                href="/dashboard"
+                href="/login"
                 className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-300"
               >
-                Explore platform
+                Partner login
               </Link>
             </div>
 
@@ -243,16 +243,16 @@ export default function HomePage() {
 
             <div className="flex flex-col gap-3 rounded-[32px] bg-white p-6 text-[#0b1020]">
               <Link
-                href="/login"
+                href="/login/customer"
                 className="rounded-2xl bg-[#ff6200] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#e35700]"
               >
-                Open Dalbo app
+                Start ordering
               </Link>
               <Link
-                href="/dashboard"
+                href="/login"
                 className="rounded-2xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-slate-300"
               >
-                View internal platform
+                Partner login
               </Link>
             </div>
           </div>
