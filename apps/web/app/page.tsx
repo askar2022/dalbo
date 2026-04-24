@@ -128,6 +128,69 @@ function JourneyPhone({ view }: { view: JourneyView }) {
           <span>Dalbo</span>
           <span>9:41</span>
         </div>
+        <div className="mt-4 rounded-2xl border border-slate-200 p-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-medium text-slate-500">Estimated arrival</p>
+              <p className="mt-1 text-2xl font-semibold text-slate-900">25-30 min</p>
+            </div>
+            <span className="rounded-full bg-orange-100 px-3 py-1 text-[11px] font-semibold text-orange-600">
+              On the way
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 flex items-center justify-between gap-2 text-[11px]">
+          <div className="flex flex-col items-center gap-2 text-center text-green-600">
+            <span className="h-3 w-3 rounded-full bg-green-500" />
+            <span>Confirmed</span>
+          </div>
+          <div className="h-[2px] flex-1 bg-green-400" />
+          <div className="flex flex-col items-center gap-2 text-center text-green-600">
+            <span className="h-3 w-3 rounded-full bg-green-500" />
+            <span>Preparing</span>
+          </div>
+          <div className="h-[2px] flex-1 bg-[#ff6200]" />
+          <div className="flex flex-col items-center gap-2 text-center text-[#ff6200]">
+            <span className="h-3 w-3 rounded-full bg-[#ff6200]" />
+            <span>On the way</span>
+          </div>
+          <div className="h-[2px] flex-1 bg-slate-200" />
+          <div className="flex flex-col items-center gap-2 text-center text-slate-400">
+            <span className="h-3 w-3 rounded-full bg-slate-300" />
+            <span>Delivered</span>
+          </div>
+        </div>
+        <div className="mt-4 rounded-[24px] border border-slate-200 bg-[#fffaf5] p-3">
+          <div className="relative h-40 overflow-hidden rounded-[20px] bg-[#eef4f7]">
+            <div className="absolute inset-0 opacity-60">
+              <div className="absolute left-5 top-6 h-20 w-28 rounded-full border border-slate-200" />
+              <div className="absolute right-6 top-8 h-16 w-24 rounded-full border border-slate-200" />
+              <div className="absolute left-16 bottom-6 h-14 w-32 rounded-full border border-slate-200" />
+            </div>
+            <svg
+              viewBox="0 0 260 160"
+              className="absolute inset-0 h-full w-full"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M36 128 C78 110, 110 68, 152 74 C185 80, 205 42, 226 26"
+                stroke="#ff6200"
+                strokeWidth="4"
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute bottom-6 left-8 flex h-8 w-8 items-center justify-center rounded-full bg-[#ff6200] text-sm text-white">
+              🍽️
+            </div>
+            <div className="absolute left-[48%] top-[46%] flex h-9 w-9 items-center justify-center rounded-full bg-[#ff6200] text-sm text-white shadow-sm">
+              🛵
+            </div>
+            <div className="absolute right-6 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-white text-base shadow-sm">
+              🏠
+            </div>
+          </div>
+        </div>
         <div className="mt-4 rounded-[22px] bg-[#0b1020] p-4 text-white">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">
             Tracking
@@ -243,36 +306,6 @@ export default function HomePage() {
               </div>
 
               <div className="relative flex max-w-6xl flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-                <div className="pointer-events-none absolute inset-x-8 top-[24%] hidden xl:block">
-                  <svg
-                    viewBox="0 0 960 180"
-                    className="h-24 w-full"
-                    fill="none"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M20 120 C160 165, 285 40, 430 92 S700 165, 940 78"
-                      stroke="#fdba74"
-                      strokeWidth="4"
-                      strokeDasharray="8 10"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="absolute left-[47%] top-[44%] flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#ff6200] text-2xl text-white">
-                    🚗
-                  </div>
-                  <div className="absolute right-1 top-[6%] rounded-2xl border border-orange-200 bg-white p-3">
-                    <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#ff6200]" fill="none">
-                      <path
-                        d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1v-8.5Z"
-                        stroke="currentColor"
-                        strokeWidth="1.8"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
                 {steps.map((step, index) => (
                   <div
                     key={step.title}
