@@ -18,23 +18,135 @@ const benefitCards = [
 const steps = [
   {
     step: "01",
-    icon: "🍽️",
     title: "Find Your Favorite Food",
     description: "Browse local restaurants and discover meals you love, fast and easy.",
+    view: "discover",
   },
   {
     step: "02",
-    icon: "🛒",
     title: "Order in Seconds",
     description: "Choose your meal, customize your order, and check out in just a few taps.",
+    view: "order",
   },
   {
     step: "03",
-    icon: "🚚",
     title: "Track & Enjoy",
     description: "Follow your order in real time and enjoy fresh food delivered to your door.",
+    view: "track",
   },
 ];
+
+function JourneyPhone({ view }: { view: "discover" | "order" | "track" }) {
+  if (view === "discover") {
+    return (
+      <div className="rounded-[28px] bg-white p-3">
+        <div className="rounded-[24px] border border-slate-200 bg-[#fffaf5] p-3">
+          <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+            <span>Dalbo</span>
+            <span>9:41</span>
+          </div>
+          <div className="mt-3 rounded-[20px] bg-[#ff6200] p-4 text-white">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-100">
+              Discover
+            </p>
+            <p className="mt-2 text-lg font-semibold leading-6">Good food, ready near you.</p>
+            <div className="mt-3 rounded-2xl bg-white/20 px-3 py-2 text-xs">
+              Search restaurants, burgers, pizza...
+            </div>
+          </div>
+          <div className="mt-4 grid gap-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-3">
+              <p className="text-sm font-semibold text-slate-900">Spice Garden</p>
+              <p className="mt-1 text-xs text-slate-500">Indian . 25-30 min</p>
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-3">
+              <p className="text-sm font-semibold text-slate-900">Mama's Kitchen</p>
+              <p className="mt-1 text-xs text-slate-500">Home food . 20-25 min</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (view === "order") {
+    return (
+      <div className="rounded-[28px] bg-white p-3">
+        <div className="rounded-[24px] border border-slate-200 bg-white p-3">
+          <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+            <span>Dalbo</span>
+            <span>9:41</span>
+          </div>
+          <div className="mt-4">
+            <p className="text-lg font-semibold text-slate-900">Classic Burger</p>
+            <p className="mt-1 text-xs text-slate-500">
+              Beef patty, lettuce, tomato, and house sauce.
+            </p>
+          </div>
+          <div className="mt-4 grid gap-3">
+            <div className="rounded-2xl bg-slate-50 p-3">
+              <div className="flex items-center justify-between text-sm font-semibold text-slate-900">
+                <span>Classic Burger</span>
+                <span>$12.99</span>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">Qty 1 . Add cheese . No onions</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-3">
+              <div className="flex items-center justify-between text-sm font-semibold text-slate-900">
+                <span>Orange Juice</span>
+                <span>$3.99</span>
+              </div>
+              <p className="mt-2 text-xs text-slate-500">Fresh chilled drink</p>
+            </div>
+          </div>
+          <div className="mt-4 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+            <div className="flex items-center justify-between text-sm text-slate-600">
+              <span>Subtotal</span>
+              <span className="font-semibold text-slate-900">$16.98</span>
+            </div>
+            <button className="mt-3 w-full rounded-2xl bg-[#ff6200] px-4 py-3 text-sm font-semibold text-white">
+              Checkout
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-[28px] bg-white p-3">
+      <div className="rounded-[24px] border border-slate-200 bg-white p-3">
+        <div className="flex items-center justify-between text-[10px] font-semibold text-slate-500">
+          <span>Dalbo</span>
+          <span>9:41</span>
+        </div>
+        <div className="mt-4 rounded-[22px] bg-[#0b1020] p-4 text-white">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">
+            Tracking
+          </p>
+          <p className="mt-2 text-lg font-semibold leading-6">Your order is on the way.</p>
+        </div>
+        <div className="mt-4 space-y-3">
+          <div className="flex items-center gap-3">
+            <span className="h-3 w-3 rounded-full bg-[#ff6200]" />
+            <p className="text-sm font-medium text-slate-900">Restaurant confirmed</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="h-3 w-3 rounded-full bg-[#ff6200]" />
+            <p className="text-sm font-medium text-slate-900">Driver picked up order</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="h-3 w-3 rounded-full bg-orange-200" />
+            <p className="text-sm font-medium text-slate-500">Arriving in 8 minutes</p>
+          </div>
+        </div>
+        <div className="mt-4 rounded-2xl bg-orange-50 p-3 text-sm text-slate-700">
+          Track in real time until your food reaches the door.
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage() {
   return (
@@ -107,35 +219,51 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="grid max-w-4xl gap-4 md:grid-cols-3">
-              {steps.map((step) => (
-                <article key={step.title} className="rounded-[32px] border border-slate-200 bg-white p-6">
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-xl">
-                      {step.icon}
-                    </span>
-                    <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
-                      {step.step}
-                    </span>
-                  </div>
-                  <h3 className="mt-5 text-2xl font-semibold">{step.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+            <div id="how-it-works" className="space-y-5">
+              <div className="max-w-2xl space-y-3">
+                <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
+                  How It Works
+                </p>
+                <h2 className="text-4xl font-bold tracking-tight">
+                  From craving to delivery, made simple.
+                </h2>
+                <p className="text-base leading-7 text-slate-600">
+                  Everything a customer cares about comes down to three simple moments: find
+                  something good, order quickly, and track it all the way home.
+                </p>
+              </div>
 
-        <section id="how-it-works" className="space-y-8">
-          <div className="max-w-2xl space-y-3">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
-              How It Works
-            </p>
-            <h2 className="text-4xl font-bold tracking-tight">From craving to delivery, made simple.</h2>
-            <p className="text-base leading-7 text-slate-600">
-              Everything a customer cares about comes down to three simple moments: find something
-              good, order quickly, and track it all the way home.
-            </p>
+              <div className="grid max-w-6xl gap-6 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
+                {steps.map((step, index) => (
+                  <div key={step.title} className="contents lg:block">
+                    <article
+                      className={`rounded-[36px] border bg-[#fff7f1] p-4 transition duration-200 hover:-translate-y-1 ${
+                        index === 1
+                          ? "border-orange-300 ring-1 ring-orange-200"
+                          : "border-slate-200"
+                      }`}
+                    >
+                      <JourneyPhone view={step.view} />
+                      <div className="px-3 pb-3 pt-1">
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
+                            {step.step}
+                          </span>
+                        </div>
+                        <h3 className="mt-3 text-[28px] font-semibold leading-8">{step.title}</h3>
+                        <p className="mt-3 text-base leading-7 text-slate-600">
+                          {step.description}
+                        </p>
+                      </div>
+                    </article>
+
+                    {index < steps.length - 1 ? (
+                      <div className="hidden text-4xl font-semibold text-orange-300 lg:block">→</div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
 
