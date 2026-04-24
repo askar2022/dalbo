@@ -409,8 +409,8 @@ export function FoodPlaceDashboardContent() {
       message: undefined,
     });
 
-    const { error } = await supabase
-      .from("orders")
+    const { error } = await (supabase
+      .from("orders") as any)
       .update({ status: nextStatus })
       .eq("id", orderId);
 

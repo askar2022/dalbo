@@ -362,8 +362,8 @@ export function DriverDashboardContent() {
       orderId: order.id,
     });
 
-    const { data, error } = await supabase
-      .from("orders")
+    const { data, error } = await (supabase
+      .from("orders") as any)
       .update({
         driver_id: state.userId,
       })
@@ -418,8 +418,8 @@ export function DriverDashboardContent() {
       orderId: order.id,
     });
 
-    const { error } = await supabase
-      .from("orders")
+    const { error } = await (supabase
+      .from("orders") as any)
       .update({ status: nextStatus })
       .eq("id", order.id)
       .eq("driver_id", state.userId);
