@@ -203,7 +203,8 @@ export function DriverDashboardContent() {
         throw addressesResult.error;
       }
 
-      const itemsByOrderId = (orderItemsResult.data ?? []).reduce<Record<string, DeliveryItemRow[]>>(
+      const deliveryOrderItems = (orderItemsResult.data ?? []) as DeliveryItemRow[];
+      const itemsByOrderId = deliveryOrderItems.reduce<Record<string, DeliveryItemRow[]>>(
         (accumulator, item) => {
           accumulator[item.order_id] ??= [];
           accumulator[item.order_id].push(item);
@@ -212,7 +213,12 @@ export function DriverDashboardContent() {
         {},
       );
 
-      const addressesById = (addressesResult.data ?? []).reduce<
+      const deliveryAddresses = (addressesResult.data ?? []) as Array<{
+        id: string;
+        label: string | null;
+        address_text: string;
+      }>;
+      const addressesById = deliveryAddresses.reduce<
         Record<string, { label: string | null; address_text: string }>
       >((accumulator, address) => {
         accumulator[address.id] = {

@@ -183,9 +183,9 @@ export function CustomerDashboardContent() {
         throw recentOrdersResult.error;
       }
 
-      const restaurants = restaurantsResult.data ?? [];
+      const restaurants = (restaurantsResult.data ?? []) as RestaurantRow[];
       const initialRestaurantId = restaurants[0]?.id ?? "";
-      const addresses = addressesResult.data ?? [];
+      const addresses = (addressesResult.data ?? []) as AddressRow[];
       const preferredAddressId =
         addresses.find((address) => address.is_default)?.id ?? addresses[0]?.id ?? "";
       const rawRecentOrders =
@@ -211,7 +211,8 @@ export function CustomerDashboardContent() {
         throw recentOrderItemsResult.error;
       }
 
-      const itemsByOrderId = (recentOrderItemsResult.data ?? []).reduce<Record<string, RecentOrderItemRow[]>>(
+      const recentOrderItems = (recentOrderItemsResult.data ?? []) as RecentOrderItemRow[];
+      const itemsByOrderId = recentOrderItems.reduce<Record<string, RecentOrderItemRow[]>>(
         (accumulator, item) => {
           accumulator[item.order_id] ??= [];
           accumulator[item.order_id].push(item);

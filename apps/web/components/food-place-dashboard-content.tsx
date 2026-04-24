@@ -151,7 +151,7 @@ export function FoodPlaceDashboardContent() {
         throw restaurantsError;
       }
 
-      const restaurantRows = restaurants ?? [];
+      const restaurantRows = (restaurants ?? []) as RestaurantRow[];
       const resolvedRestaurantId =
         preferredRestaurantId && restaurantRows.some((restaurant) => restaurant.id === preferredRestaurantId)
           ? preferredRestaurantId
@@ -239,7 +239,8 @@ export function FoodPlaceDashboardContent() {
         throw orderItemsResult.error;
       }
 
-      const itemsByOrderId = (orderItemsResult.data ?? []).reduce<Record<string, IncomingOrderItemRow[]>>(
+      const incomingOrderItems = (orderItemsResult.data ?? []) as IncomingOrderItemRow[];
+      const itemsByOrderId = incomingOrderItems.reduce<Record<string, IncomingOrderItemRow[]>>(
         (accumulator, item) => {
           accumulator[item.order_id] ??= [];
           accumulator[item.order_id].push(item);
@@ -269,8 +270,8 @@ export function FoodPlaceDashboardContent() {
         userId: session.user.id,
         data: {
           restaurants: restaurantRows,
-          categories: categoriesResult.data ?? [],
-          menuItems: menuItemsResult.data ?? [],
+          categories: (categoriesResult.data ?? []) as CategoryRow[],
+          menuItems: (menuItemsResult.data ?? []) as MenuItemRow[],
           openOrders: openOrdersResult.count ?? 0,
           incomingOrders,
         },
