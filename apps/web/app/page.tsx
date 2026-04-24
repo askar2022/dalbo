@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type JourneyView = "discover" | "order" | "track";
@@ -161,13 +162,14 @@ export default function HomePage() {
       <div className="mx-auto flex max-w-6xl flex-col gap-20 px-6 py-8 lg:py-12">
         <header className="flex flex-col gap-5 rounded-[36px] border border-orange-100 bg-white px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[#ff6200] text-lg font-bold text-white">
-              D
-            </span>
-            <div>
-              <p className="text-xl font-semibold">Dalbo</p>
-              <p className="text-sm text-slate-500">Order. Deliver. Enjoy.</p>
-            </div>
+            <Image
+              src="/logo_dalbo.png"
+              alt="Dalbo logo"
+              width={170}
+              height={52}
+              className="h-12 w-auto object-contain"
+              priority
+            />
           </div>
 
           <nav className="flex flex-wrap items-center gap-3 text-sm font-medium">
