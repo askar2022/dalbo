@@ -1,23 +1,5 @@
 import Link from "next/link";
 
-const audienceCards = [
-  {
-    title: "Customer",
-    description: "Discover nearby favorites, order in seconds, and follow every step from kitchen to door.",
-    eyebrow: "For Customers",
-  },
-  {
-    title: "Food Place",
-    description: "Keep menus fresh, accept incoming orders quickly, and manage preparation without chaos.",
-    eyebrow: "For Food Places",
-  },
-  {
-    title: "Driver",
-    description: "Accept jobs, stay on route, and update delivery progress with a clear driver workflow.",
-    eyebrow: "For Drivers",
-  },
-];
-
 const benefitCards = [
   {
     title: "Fast ordering flow",
@@ -35,24 +17,23 @@ const benefitCards = [
 
 const steps = [
   {
-    title: "Choose a food place",
-    description: "Customers browse restaurants, menus, and available items from one storefront.",
+    step: "01",
+    icon: "🍽️",
+    title: "Find Your Favorite Food",
+    description: "Browse local restaurants and discover meals you love, fast and easy.",
   },
   {
-    title: "Place and prepare",
-    description: "The Food Place receives the order, confirms it, and moves it through preparation.",
+    step: "02",
+    icon: "🛒",
+    title: "Order in Seconds",
+    description: "Choose your meal, customize your order, and check out in just a few taps.",
   },
   {
-    title: "Deliver with confidence",
-    description: "Drivers accept ready orders, pick them up, and complete delivery with status tracking.",
+    step: "03",
+    icon: "🚚",
+    title: "Track & Enjoy",
+    description: "Follow your order in real time and enjoy fresh food delivered to your door.",
   },
-];
-
-const platformPoints = [
-  "Customer web and mobile ordering",
-  "Food Place dashboard for menus and order flow",
-  "Driver dashboard for dispatch and delivery updates",
-  "Supabase auth, database, and realtime foundation",
 ];
 
 export default function HomePage() {
@@ -73,9 +54,6 @@ export default function HomePage() {
           <nav className="flex flex-wrap items-center gap-3 text-sm font-medium">
             <a href="#how-it-works" className="text-slate-600 transition hover:text-slate-900">
               How it works
-            </a>
-            <a href="#platform" className="text-slate-600 transition hover:text-slate-900">
-              Platform
             </a>
             <Link
               href="/login"
@@ -122,24 +100,6 @@ export default function HomePage() {
                 Partner login
               </Link>
             </div>
-
-            <div className="grid max-w-2xl gap-4 sm:grid-cols-3">
-              <article className="rounded-3xl border border-slate-200 bg-white p-5">
-                <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Ordering</p>
-                <p className="mt-3 text-3xl font-bold text-[#0b1020]">3 steps</p>
-                <p className="mt-2 text-sm text-slate-600">Browse, place, and track with less friction.</p>
-              </article>
-              <article className="rounded-3xl border border-slate-200 bg-white p-5">
-                <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Dashboards</p>
-                <p className="mt-3 text-3xl font-bold text-[#0b1020]">3 roles</p>
-                <p className="mt-2 text-sm text-slate-600">Customer, Food Place, and Driver all connected.</p>
-              </article>
-              <article className="rounded-3xl border border-slate-200 bg-white p-5">
-                <p className="text-sm uppercase tracking-[0.25em] text-slate-400">Platform</p>
-                <p className="mt-3 text-3xl font-bold text-[#0b1020]">1 system</p>
-                <p className="mt-2 text-sm text-slate-600">Auth, realtime status, and operations in sync.</p>
-              </article>
-            </div>
           </div>
 
           <div className="rounded-[36px] border border-orange-100 bg-white p-7">
@@ -173,54 +133,26 @@ export default function HomePage() {
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
               How It Works
             </p>
-            <h2 className="text-4xl font-bold tracking-tight">One order journey, three connected experiences.</h2>
+            <h2 className="text-4xl font-bold tracking-tight">From craving to delivery, made simple.</h2>
             <p className="text-base leading-7 text-slate-600">
-              Dalbo keeps every part of the delivery process aligned, from the first customer tap
-              to the final driver dropoff.
+              Everything a customer cares about comes down to three simple moments: find something
+              good, order quickly, and track it all the way home.
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            {steps.map((step, index) => (
+            {steps.map((step) => (
               <article key={step.title} className="rounded-[32px] border border-slate-200 bg-white p-6">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-lg font-bold text-orange-600">
-                  0{index + 1}
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-xl">
+                    {step.icon}
+                  </span>
+                  <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
+                    {step.step}
+                  </span>
+                </div>
                 <h3 className="mt-5 text-2xl font-semibold">{step.title}</h3>
                 <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section id="platform" className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <div className="space-y-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
-              Platform
-            </p>
-            <h2 className="text-4xl font-bold tracking-tight">Built for the full delivery operation, not just checkout.</h2>
-            <p className="text-base leading-7 text-slate-600">
-              The Dalbo website is more than a landing page. It is the entry point into customer
-              ordering, restaurant operations, and driver dispatch, all supported by one shared backend.
-            </p>
-
-            <div className="grid gap-3">
-              {platformPoints.map((point) => (
-                <div key={point} className="rounded-2xl border border-slate-200 bg-white px-4 py-4 text-sm text-slate-700">
-                  {point}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid gap-6 md:grid-cols-3">
-            {audienceCards.map((card) => (
-              <article key={card.title} className="rounded-[32px] border border-slate-200 bg-white p-6">
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
-                  {card.eyebrow}
-                </p>
-                <h3 className="mt-4 text-2xl font-semibold">{card.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{card.description}</p>
               </article>
             ))}
           </div>
