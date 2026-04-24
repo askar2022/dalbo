@@ -49,6 +49,8 @@ type IncomingOrderRow = {
   status: string;
   subtotal: number;
   delivery_fee: number;
+  service_fee: number;
+  commission_amount: number;
   total: number;
   placed_at: string;
   notes: string | null;
@@ -176,6 +178,7 @@ export function FoodPlaceDashboardContent() {
           ? supabase
               .from("orders")
               .select("id", { count: "exact", head: true })
+              .eq("payment_status", "paid")
               .in(
                 "restaurant_id",
                 restaurantRows.map((restaurant) => restaurant.id),
@@ -186,8 +189,9 @@ export function FoodPlaceDashboardContent() {
           ? supabase
               .from("orders")
               .select(
-                "id, restaurant_id, status, subtotal, delivery_fee, total, placed_at, notes, restaurants(name)",
+                "id, restaurant_id, status, subtotal, delivery_fee, service_fee, commission_amount, total, placed_at, notes, restaurants(name)",
               )
+              .eq("payment_status", "paid")
               .in(
                 "restaurant_id",
                 restaurantRows.map((restaurant) => restaurant.id),
@@ -221,6 +225,8 @@ export function FoodPlaceDashboardContent() {
           status: string;
           subtotal: number;
           delivery_fee: number;
+          service_fee: number | null;
+          commission_amount: number | null;
           total: number;
           placed_at: string;
           notes: string | null;
@@ -258,6 +264,8 @@ export function FoodPlaceDashboardContent() {
         status: order.status,
         subtotal: Number(order.subtotal),
         delivery_fee: Number(order.delivery_fee),
+        service_fee: Number(order.service_fee ?? 0),
+        commission_amount: Number(order.commission_amount ?? 0),
         total: Number(order.total),
         placed_at: order.placed_at,
         notes: order.notes,
@@ -533,9 +541,17 @@ export function FoodPlaceDashboardContent() {
 
                       <div className="space-y-2 text-sm md:text-right">
                         <p className="font-semibold text-slate-900">{formatCurrency(order.total)}</p>
-                        <p className="text-slate-600">
-                          Subtotal {formatCurrency(order.subtotal)} + delivery {formatCurrency(order.delivery_fee)}
-                        </p>
+                        <div className="space-y-1 text-slate-600">
+                          <p>
+                            Customer paid {formatCurrency(order.subtotal)} + service{" "}
+                            {formatCurrency(order.service_fee)} + delivery{" "}
+                            {formatCurrency(order.delivery_fee)}
+                          </p>
+                          <p>
+                            Restaurant keeps {formatCurrency(order.subtotal - order.commission_amount)} after{" "}
+                            {formatCurrency(order.commission_amount)} commission
+                          </p>
+                        </div>
                       </div>
                     </div>
 

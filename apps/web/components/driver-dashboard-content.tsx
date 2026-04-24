@@ -119,6 +119,7 @@ export function DriverDashboardContent() {
               "id, status, total, placed_at, notes, restaurant_id, delivery_address_id, restaurants(name, address_text)",
             )
             .is("driver_id", null)
+            .eq("payment_status", "paid")
             .eq("status", "ready")
             .order("placed_at", { ascending: true }),
           supabase
@@ -127,12 +128,14 @@ export function DriverDashboardContent() {
               "id, status, total, placed_at, notes, restaurant_id, delivery_address_id, restaurants(name, address_text)",
             )
             .eq("driver_id", session.user.id)
+            .eq("payment_status", "paid")
             .in("status", ["ready", "picked_up"])
             .order("placed_at", { ascending: true }),
           supabase
             .from("orders")
             .select("id", { count: "exact", head: true })
             .eq("driver_id", session.user.id)
+            .eq("payment_status", "paid")
             .eq("status", "delivered"),
         ]);
 

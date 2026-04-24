@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DashboardShell } from "./dashboard-shell";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser";
+import { calculateOrderPricing } from "../lib/order-pricing";
 
 type RestaurantRow = {
   id: string;
@@ -59,6 +60,10 @@ type RecentOrderItemRow = {
 type RecentOrderRow = {
   id: string;
   status: string;
+  payment_status: string;
+  subtotal: number;
+  delivery_fee: number;
+  service_fee: number;
   total: number;
   placed_at: string;
   restaurant_id: string;
@@ -74,6 +79,10 @@ function formatCurrency(value: number) {
 }
 
 function formatStatus(status: string) {
+  return status.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function formatPaymentStatus(status: string) {
   return status.replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
@@ -144,6 +153,7 @@ export function CustomerDashboardContent() {
           .from("orders")
           .select("id", { count: "exact", head: true })
           .eq("customer_id", session.user.id)
+          .eq("payment_status", "paid")
           .in("status", ["placed", "confirmed", "preparing", "ready", "picked_up"]),
         supabase
           .from("customer_addresses")
@@ -157,7 +167,9 @@ export function CustomerDashboardContent() {
           .order("created_at", { ascending: false }),
         supabase
           .from("orders")
-          .select("id, status, total, placed_at, restaurant_id, restaurants(name)")
+          .select(
+            "id, status, payment_status, subtotal, delivery_fee, service_fee, total, placed_at, restaurant_id, restaurants(name)",
+          )
           .eq("customer_id", session.user.id)
           .order("placed_at", { ascending: false })
           .limit(5),
@@ -192,6 +204,10 @@ export function CustomerDashboardContent() {
         (recentOrdersResult.data as Array<{
           id: string;
           status: string;
+          payment_status: string | null;
+          subtotal: number | null;
+          delivery_fee: number | null;
+          service_fee: number | null;
           total: number;
           placed_at: string;
           restaurant_id: string;
@@ -224,6 +240,10 @@ export function CustomerDashboardContent() {
       const recentOrders: RecentOrderRow[] = rawRecentOrders.map((order) => ({
         id: order.id,
         status: order.status,
+        payment_status: order.payment_status ?? "pending",
+        subtotal: Number(order.subtotal ?? 0),
+        delivery_fee: Number(order.delivery_fee ?? 0),
+        service_fee: Number(order.service_fee ?? 0),
         total: Number(order.total),
         placed_at: order.placed_at,
         restaurant_id: order.restaurant_id,
@@ -258,6 +278,113 @@ export function CustomerDashboardContent() {
 
   useEffect(() => {
     void loadDashboard();
+  }, [supabase]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const checkoutStateParam = params.get("checkout");
+    const sessionId = params.get("session_id");
+    const cancelledOrderId = params.get("order_id");
+
+    if (!checkoutStateParam) {
+      return;
+    }
+
+    let isMounted = true;
+
+    async function syncCheckoutState() {
+      try {
+        const {
+          data: { session },
+          error: sessionError,
+        } = await supabase.auth.getSession();
+
+        if (sessionError) {
+          throw sessionError;
+        }
+
+        if (!session) {
+          throw new Error("No active session found.");
+        }
+
+        if (checkoutStateParam === "success" && sessionId) {
+          const response = await fetch("/api/checkout/confirm", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ sessionId }),
+          });
+          const payload = (await response.json()) as { paymentStatus?: string; error?: string };
+
+          if (!response.ok) {
+            throw new Error(payload.error || "Unable to confirm your payment.");
+          }
+
+          if (!isMounted) {
+            return;
+          }
+
+          setCheckoutState({
+            status: payload.paymentStatus === "paid" ? "success" : "error",
+            message:
+              payload.paymentStatus === "paid"
+                ? "Payment confirmed. Your order is now live for the restaurant."
+                : "Payment is still processing. Refresh in a moment if it does not update.",
+          });
+        }
+
+        if (checkoutStateParam === "cancelled" && cancelledOrderId) {
+          const response = await fetch("/api/checkout/cancel", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${session.access_token}`,
+            },
+            body: JSON.stringify({ orderId: cancelledOrderId }),
+          });
+          const payload = (await response.json()) as { error?: string };
+
+          if (!response.ok) {
+            throw new Error(payload.error || "Unable to cancel your pending checkout.");
+          }
+
+          if (!isMounted) {
+            return;
+          }
+
+          setCheckoutState({
+            status: "error",
+            message: "Checkout was cancelled. Your order was not sent to the restaurant.",
+          });
+        }
+
+        await loadDashboard();
+
+        const nextUrl = new URL(window.location.href);
+        nextUrl.searchParams.delete("checkout");
+        nextUrl.searchParams.delete("session_id");
+        nextUrl.searchParams.delete("order_id");
+        window.history.replaceState({}, "", nextUrl.toString());
+      } catch (error) {
+        if (!isMounted) {
+          return;
+        }
+
+        setCheckoutState({
+          status: "error",
+          message:
+            error instanceof Error ? error.message : "Unable to sync your Stripe checkout state.",
+        });
+      }
+    }
+
+    void syncCheckoutState();
+
+    return () => {
+      isMounted = false;
+    };
   }, [supabase]);
 
   const restaurants = state.data?.restaurants ?? [];
@@ -344,7 +471,8 @@ export function CustomerDashboardContent() {
       ? menuState.menuItems
       : menuState.menuItems.filter((item) => item.category_id === selectedCategoryId);
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const cartTotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const cartSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const checkoutPricing = calculateOrderPricing(cartSubtotal);
 
   function handleSelectRestaurant(restaurantId: string) {
     setSelectedRestaurantId(restaurantId);
@@ -416,49 +544,29 @@ export function CustomerDashboardContent() {
         throw new Error("No active session found.");
       }
 
-      const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      const deliveryFee = 3.99;
-
-      const { data: order, error: orderError } = await (supabase
-        .from("orders") as any)
-        .insert({
-          customer_id: session.user.id,
-          restaurant_id: selectedRestaurantId,
-          delivery_address_id: selectedAddressId || null,
-          status: "placed",
-          subtotal,
-          delivery_fee: deliveryFee,
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          restaurantId: selectedRestaurantId,
+          deliveryAddressId: selectedAddressId || null,
           notes: orderNotes || null,
-        })
-        .select("id")
-        .single();
-
-      if (orderError) {
-        throw orderError;
-      }
-
-      const { error: orderItemsError } = await (supabase.from("order_items") as any).insert(
-        cartItems.map((item) => ({
-          order_id: order.id,
-          menu_item_id: item.id,
-          item_name: item.name,
-          quantity: item.quantity,
-          unit_price: item.price,
-        })),
-      );
-
-      if (orderItemsError) {
-        throw orderItemsError;
-      }
-
-      setCartItems([]);
-      setCartRestaurantId("");
-      setOrderNotes("");
-      setCheckoutState({
-        status: "success",
-        message: "Order placed successfully. The restaurant dashboard can now see it.",
+          items: cartItems.map((item) => ({
+            menuItemId: item.id,
+            quantity: item.quantity,
+          })),
+        }),
       });
-      await loadDashboard();
+      const payload = (await response.json()) as { checkoutUrl?: string; error?: string };
+
+      if (!response.ok || !payload.checkoutUrl) {
+        throw new Error(payload.error || "Unable to start Stripe checkout.");
+      }
+
+      window.location.assign(payload.checkoutUrl);
     } catch (error) {
       setCheckoutState({
         status: "error",
@@ -472,7 +580,7 @@ export function CustomerDashboardContent() {
     <DashboardShell
       eyebrow="Customer dashboard"
       title="Order food, track deliveries, and manage saved addresses."
-      description="This dashboard now reads from Supabase so customers can choose a food place, browse menu items, and build a cart before checkout is wired."
+      description="This dashboard now reads from Supabase so customers can choose a restaurant, browse menu items, and pay through Stripe checkout."
       stats={[
         {
           label: "Food places",
@@ -494,7 +602,7 @@ export function CustomerDashboardContent() {
         },
         {
           title: "Build the cart",
-          description: "Customers can now add menu items locally and submit a real order into Supabase.",
+          description: "Customers can now add menu items locally and start a real Stripe-backed checkout.",
         },
         {
           title: "Track recent orders",
@@ -745,15 +853,29 @@ export function CustomerDashboardContent() {
                         ))}
 
                         <div className="rounded-2xl bg-[#0b1020] p-4 text-white">
-                          <div className="flex items-center justify-between gap-3">
-                            <span className="text-sm text-slate-200">Estimated subtotal</span>
+                          <div className="space-y-3">
+                            <div className="flex items-center justify-between gap-3 text-sm text-slate-200">
+                              <span>Subtotal</span>
+                              <span>{formatCurrency(checkoutPricing.subtotal)}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3 text-sm text-slate-200">
+                              <span>Service fee</span>
+                              <span>{formatCurrency(checkoutPricing.serviceFee)}</span>
+                            </div>
+                            <div className="flex items-center justify-between gap-3 text-sm text-slate-200">
+                              <span>Delivery fee</span>
+                              <span>{formatCurrency(checkoutPricing.deliveryFee)}</span>
+                            </div>
+                          </div>
+                          <div className="mt-4 flex items-center justify-between gap-3 border-t border-slate-700 pt-4">
+                            <span className="text-sm text-slate-200">Estimated total</span>
                             <span className="text-lg font-semibold">
-                              {formatCurrency(cartTotal)}
+                              {formatCurrency(checkoutPricing.total)}
                             </span>
                           </div>
                           <p className="mt-3 text-sm text-slate-300">
-                            Delivery fee is currently fixed for the MVP. The button below now
-                            creates `orders` and `order_items` in Supabase.
+                            Restaurant commission is tracked separately for payouts. Payment now
+                            opens a Stripe checkout and only paid orders move into dispatch.
                           </p>
                         </div>
 
@@ -808,8 +930,8 @@ export function CustomerDashboardContent() {
                             className="mt-4 w-full rounded-2xl bg-[#ff6200] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#e35700] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {checkoutState.status === "submitting"
-                              ? "Placing order..."
-                              : "Place order"}
+                              ? "Opening checkout..."
+                              : "Pay with card"}
                           </button>
                         </div>
                       </div>
@@ -842,6 +964,17 @@ export function CustomerDashboardContent() {
                                 <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
                                   {formatStatus(order.status)}
                                 </span>
+                                <span
+                                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    order.payment_status === "paid"
+                                      ? "bg-green-100 text-green-700"
+                                      : order.payment_status === "pending"
+                                        ? "bg-amber-100 text-amber-700"
+                                        : "bg-slate-200 text-slate-600"
+                                  }`}
+                                >
+                                  {formatPaymentStatus(order.payment_status)}
+                                </span>
                               </div>
                               <p className="mt-2 text-sm text-slate-600">
                                 Placed {formatDateTime(order.placed_at)}
@@ -851,6 +984,11 @@ export function CustomerDashboardContent() {
                               {formatCurrency(order.total)}
                             </p>
                           </div>
+                          <p className="mt-3 text-sm text-slate-600">
+                            Items {formatCurrency(order.subtotal)} + service{" "}
+                            {formatCurrency(order.service_fee)} + delivery{" "}
+                            {formatCurrency(order.delivery_fee)}
+                          </p>
 
                           <div className="mt-4 grid gap-2">
                             {order.items.map((item) => (

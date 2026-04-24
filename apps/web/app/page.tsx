@@ -305,44 +305,27 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="relative flex max-w-6xl flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+              <div className="grid max-w-6xl gap-6 xl:grid-cols-3">
                 {steps.map((step, index) => (
-                  <div
-                    key={step.title}
-                    className="flex flex-col items-center gap-6 xl:flex-row xl:flex-1 xl:justify-center"
-                  >
+                  <div key={step.title} className="flex h-full justify-center">
                     <article
-                      className={`mx-auto flex w-full flex-col rounded-[36px] border bg-[#fff7f1] p-4 transition duration-200 hover:-translate-y-1 sm:p-5 ${
-                        index === 1
-                          ? "max-w-[450px] border-orange-300 shadow-[0_0_0_1px_rgba(255,98,0,0.18)] xl:min-h-[620px]"
-                          : "max-w-[290px] border-slate-200 xl:min-h-[540px]"
-                      }`}
+                      className="mx-auto flex h-full w-full max-w-[340px] flex-col rounded-[36px] border border-slate-200 bg-[#fff7f1] p-5 transition duration-200 hover:-translate-y-1 xl:min-h-[640px]"
                     >
-                      <div
-                        className={`mx-auto w-full ${
-                          index === 1 ? "max-w-[280px] sm:max-w-[300px]" : "max-w-[205px] sm:max-w-[220px]"
-                        }`}
-                      >
+                      <div className="flex h-[360px] items-start justify-center">
+                        <div className="mx-auto w-full max-w-[240px]">
                         <JourneyPhone view={step.view} />
+                        </div>
                       </div>
-                      <div className="px-2 pb-3 pt-2 sm:px-3">
+                      <div className="flex flex-1 flex-col px-2 pb-3 pt-4 sm:px-3">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
                             {step.step}
                           </span>
                         </div>
-                        <h3
-                          className={`mt-3 font-semibold ${
-                            index === 1 ? "text-[40px] leading-[44px]" : "text-[26px] leading-8"
-                          }`}
-                        >
+                        <h3 className="mt-3 text-[26px] font-semibold leading-8 sm:text-[30px] sm:leading-9">
                           {step.title}
                         </h3>
-                        <p
-                          className={`mt-3 text-slate-600 ${
-                            index === 1 ? "text-lg leading-9" : "text-[15px] leading-8"
-                          }`}
-                        >
+                        <p className="mt-3 text-[15px] leading-8 text-slate-600 sm:text-base">
                           {step.description}
                         </p>
                       </div>
