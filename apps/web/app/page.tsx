@@ -103,7 +103,7 @@ export default function HomePage() {
                 href="/login"
                 className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-300"
               >
-                Partner login
+                Partner with Dalbo
               </Link>
             </div>
           </div>
@@ -117,7 +117,7 @@ export default function HomePage() {
                 A delivery brand that feels modern, simple, and ready to scale.
               </h2>
               <p className="mt-4 text-sm leading-7 text-slate-300">
-                The platform is designed so customers can order confidently, food places can
+                The platform is designed so customers can order confidently, restaurants can
                 manage menus and orders clearly, and drivers can complete deliveries with less
                 confusion.
               </p>
@@ -171,11 +171,14 @@ export default function HomePage() {
                 Ready To Launch
               </p>
               <h2 className="text-4xl font-bold tracking-tight">
-                Bring customers, food places, and drivers into one Dalbo experience.
+                Bring customers, restaurants, and drivers into one Dalbo experience.
               </h2>
               <p className="max-w-2xl text-base leading-7 text-slate-300">
-                Start with the live web app today, then continue expanding into payments, native
-                mobile flows, and branded partner onboarding.
+                Join Dalbo today and start reaching more customers, managing orders, and
+                delivering with ease.
+              </p>
+              <p className="text-sm font-medium text-orange-200">
+                Fast delivery. Trusted local partners.
               </p>
             </div>
 
@@ -190,7 +193,7 @@ export default function HomePage() {
                 href="/login"
                 className="rounded-2xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-slate-300"
               >
-                Partner login
+                Partner with Dalbo
               </Link>
             </div>
           </div>
