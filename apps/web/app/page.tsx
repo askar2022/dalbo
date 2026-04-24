@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+type JourneyView = "discover" | "order" | "track";
+
 const benefitCards = [
   {
     title: "Fast ordering flow",
@@ -15,7 +17,12 @@ const benefitCards = [
   },
 ];
 
-const steps = [
+const steps: Array<{
+  step: string;
+  title: string;
+  description: string;
+  view: JourneyView;
+}> = [
   {
     step: "01",
     title: "Find Your Favorite Food",
@@ -36,7 +43,7 @@ const steps = [
   },
 ];
 
-function JourneyPhone({ view }: { view: "discover" | "order" | "track" }) {
+function JourneyPhone({ view }: { view: JourneyView }) {
   if (view === "discover") {
     return (
       <div className="rounded-[28px] bg-white p-3">
