@@ -191,26 +191,6 @@ function JourneyPhone({ view }: { view: JourneyView }) {
             </div>
           </div>
         </div>
-        <div className="mt-4 rounded-[22px] bg-[#0b1020] p-4 text-white">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-300">
-            Tracking
-          </p>
-          <p className="mt-2 text-lg font-semibold leading-6">Your order is on the way.</p>
-        </div>
-        <div className="mt-4 space-y-3">
-          <div className="flex items-center gap-3">
-            <span className="h-3 w-3 rounded-full bg-[#ff6200]" />
-            <p className="text-sm font-medium text-slate-900">Restaurant confirmed</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="h-3 w-3 rounded-full bg-[#ff6200]" />
-            <p className="text-sm font-medium text-slate-900">Driver picked up order</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="h-3 w-3 rounded-full bg-orange-200" />
-            <p className="text-sm font-medium text-slate-500">Arriving in 8 minutes</p>
-          </div>
-        </div>
       </div>
     </div>
   );
