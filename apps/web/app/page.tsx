@@ -11,7 +11,7 @@ const benefitCards = [
   },
   {
     title: "One connected platform",
-    description: "Customer, Food Place, and Driver experiences all work from the same Supabase backend.",
+    description: "Customers, restaurants, and drivers all stay connected through one Dalbo experience.",
   },
 ];
 
@@ -76,7 +76,7 @@ export default function HomePage() {
           </nav>
         </header>
 
-        <section className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+        <section className="space-y-8">
           <div className="space-y-7">
             <span className="inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
               Food delivery for customers, restaurants, and drivers
@@ -106,28 +106,20 @@ export default function HomePage() {
                 Partner with Dalbo
               </Link>
             </div>
-          </div>
 
-          <div className="rounded-[36px] border border-orange-100 bg-white p-7">
-            <div className="rounded-[28px] bg-[#0b1020] p-6 text-white">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-300">
-                Why Dalbo
-              </p>
-              <h2 className="mt-4 text-3xl font-semibold">
-                A delivery brand that feels modern, simple, and ready to scale.
-              </h2>
-              <p className="mt-4 text-sm leading-7 text-slate-300">
-                The platform is designed so customers can order confidently, restaurants can
-                manage menus and orders clearly, and drivers can complete deliveries with less
-                confusion.
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-4">
-              {benefitCards.map((benefit) => (
-                <article key={benefit.title} className="rounded-3xl border border-slate-200 p-5">
-                  <h3 className="text-lg font-semibold">{benefit.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{benefit.description}</p>
+            <div className="grid max-w-4xl gap-4 md:grid-cols-3">
+              {steps.map((step) => (
+                <article key={step.title} className="rounded-[32px] border border-slate-200 bg-white p-6">
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-xl">
+                      {step.icon}
+                    </span>
+                    <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
+                      {step.step}
+                    </span>
+                  </div>
+                  <h3 className="mt-5 text-2xl font-semibold">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
                 </article>
               ))}
             </div>
@@ -145,22 +137,44 @@ export default function HomePage() {
               good, order quickly, and track it all the way home.
             </p>
           </div>
+        </section>
 
-          <div className="grid gap-6 md:grid-cols-3">
-            {steps.map((step) => (
-              <article key={step.title} className="rounded-[32px] border border-slate-200 bg-white p-6">
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-xl">
-                    {step.icon}
-                  </span>
-                  <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
-                    {step.step}
-                  </span>
-                </div>
-                <h3 className="mt-5 text-2xl font-semibold">{step.title}</h3>
-                <p className="mt-3 text-sm leading-7 text-slate-600">{step.description}</p>
-              </article>
-            ))}
+        <section className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
+          <div className="space-y-5">
+            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
+              Why Dalbo
+            </p>
+            <h2 className="text-4xl font-bold tracking-tight">
+              A delivery brand that feels modern, simple, and ready to scale.
+            </h2>
+            <p className="text-base leading-7 text-slate-600">
+              Dalbo is built to make ordering feel easy for customers while still keeping restaurant
+              operations and delivery flow organized behind the scenes.
+            </p>
+          </div>
+
+          <div className="rounded-[36px] border border-orange-100 bg-white p-7">
+            <div className="rounded-[28px] bg-[#0b1020] p-6 text-white">
+              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-300">
+                Why customers choose Dalbo
+              </p>
+              <h3 className="mt-4 text-3xl font-semibold">
+                Fast ordering, clearer tracking, and trusted local restaurants.
+              </h3>
+              <p className="mt-4 text-sm leading-7 text-slate-300">
+                The experience is designed to feel simple on the surface while keeping every order
+                moving cleanly from restaurant to driver to customer.
+              </p>
+            </div>
+
+            <div className="mt-6 grid gap-4">
+              {benefitCards.map((benefit) => (
+                <article key={benefit.title} className="rounded-3xl border border-slate-200 p-5">
+                  <h3 className="text-lg font-semibold">{benefit.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{benefit.description}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </section>
 
