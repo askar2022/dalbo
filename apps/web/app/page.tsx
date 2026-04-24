@@ -240,17 +240,20 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="grid max-w-6xl gap-6 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_48px_minmax(0,1fr)_48px_minmax(0,1fr)] xl:items-center">
+              <div className="flex max-w-6xl flex-col gap-6 xl:flex-row xl:items-center xl:justify-between">
                 {steps.map((step, index) => (
-                  <div key={step.title} className="contents xl:block">
+                  <div
+                    key={step.title}
+                    className="flex flex-col items-center gap-6 xl:flex-row xl:flex-1 xl:justify-center"
+                  >
                     <article
-                      className={`mx-auto flex h-full w-full max-w-[380px] flex-col rounded-[36px] border bg-[#fff7f1] p-4 transition duration-200 hover:-translate-y-1 sm:p-5 ${
+                      className={`mx-auto flex w-full max-w-[360px] flex-col rounded-[36px] border bg-[#fff7f1] p-4 transition duration-200 hover:-translate-y-1 sm:p-5 ${
                         index === 1
-                          ? "border-orange-300 shadow-[0_0_0_1px_rgba(255,98,0,0.18)] xl:scale-[1.03]"
+                          ? "border-orange-300 shadow-[0_0_0_1px_rgba(255,98,0,0.18)]"
                           : "border-slate-200"
                       }`}
                     >
-                      <div className="mx-auto w-full max-w-[270px]">
+                      <div className="mx-auto w-full max-w-[250px]">
                         <JourneyPhone view={step.view} />
                       </div>
                       <div className="px-2 pb-3 pt-2 sm:px-3">
