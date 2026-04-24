@@ -1,0 +1,2 @@
+-- Dalbo initial schema placeholder.
+-- Add tables, indexes, RLS policies, and seed-safe reference data here.

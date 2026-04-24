@@ -1,0 +1,16 @@
+{
+  "name": "dalbo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm --workspace @dalbo/web run dev",
+    "dev:customer": "npm --workspace @dalbo/customer-mobile run start",
+    "dev:driver": "npm --workspace @dalbo/driver-mobile run start",
+    "build:web": "npm --workspace @dalbo/web run build",
+    "lint:web": "npm --workspace @dalbo/web run lint"
+  }
+}

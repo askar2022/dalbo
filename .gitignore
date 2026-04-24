@@ -1,0 +1,16 @@
+node_modules
+.next
+.expo
+dist
+build
+coverage
+.DS_Store
+*.log
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+apps/*/.env
+apps/*/.env.local
+supabase/.temp
