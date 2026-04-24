@@ -211,9 +211,6 @@ function JourneyPhone({ view }: { view: JourneyView }) {
             <p className="text-sm font-medium text-slate-500">Arriving in 8 minutes</p>
           </div>
         </div>
-        <div className="mt-4 rounded-2xl bg-orange-50 p-3 text-sm text-slate-700">
-          Track in real time until your food reaches the door.
-        </div>
       </div>
     </div>
   );
