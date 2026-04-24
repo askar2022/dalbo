@@ -241,7 +241,7 @@ export default function HomePage() {
               </div>
 
               <div className="relative flex max-w-6xl flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-                <div className="pointer-events-none absolute inset-x-12 bottom-24 hidden xl:block">
+                <div className="pointer-events-none absolute inset-x-8 top-[24%] hidden xl:block">
                   <svg
                     viewBox="0 0 960 180"
                     className="h-24 w-full"
@@ -249,17 +249,17 @@ export default function HomePage() {
                     aria-hidden="true"
                   >
                     <path
-                      d="M40 115 C180 150, 280 35, 420 85 S700 165, 920 70"
+                      d="M20 120 C160 165, 285 40, 430 92 S700 165, 940 78"
                       stroke="#fdba74"
-                      strokeWidth="3"
+                      strokeWidth="4"
                       strokeDasharray="8 10"
                       strokeLinecap="round"
                     />
                   </svg>
-                  <div className="absolute left-[44%] top-[52%] flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#ff6200] text-sm font-bold text-white">
-                    D
+                  <div className="absolute left-[47%] top-[44%] flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#ff6200] text-2xl text-white">
+                    🚗
                   </div>
-                  <div className="absolute right-4 top-[10%] rounded-2xl border border-orange-200 bg-white p-3">
+                  <div className="absolute right-1 top-[6%] rounded-2xl border border-orange-200 bg-white p-3">
                     <svg viewBox="0 0 24 24" className="h-8 w-8 text-[#ff6200]" fill="none">
                       <path
                         d="M4 11.5 12 5l8 6.5V20a1 1 0 0 1-1 1h-4.5v-5h-5v5H5a1 1 0 0 1-1-1v-8.5Z"
@@ -279,13 +279,13 @@ export default function HomePage() {
                     <article
                       className={`mx-auto flex w-full flex-col rounded-[36px] border bg-[#fff7f1] p-4 transition duration-200 hover:-translate-y-1 sm:p-5 ${
                         index === 1
-                          ? "max-w-[400px] border-orange-300 shadow-[0_0_0_1px_rgba(255,98,0,0.18)] xl:min-h-[570px]"
-                          : "max-w-[320px] border-slate-200 xl:min-h-[540px]"
+                          ? "max-w-[450px] border-orange-300 shadow-[0_0_0_1px_rgba(255,98,0,0.18)] xl:min-h-[620px]"
+                          : "max-w-[290px] border-slate-200 xl:min-h-[540px]"
                       }`}
                     >
                       <div
                         className={`mx-auto w-full ${
-                          index === 1 ? "max-w-[250px] sm:max-w-[270px]" : "max-w-[210px] sm:max-w-[220px]"
+                          index === 1 ? "max-w-[280px] sm:max-w-[300px]" : "max-w-[205px] sm:max-w-[220px]"
                         }`}
                       >
                         <JourneyPhone view={step.view} />
@@ -298,14 +298,14 @@ export default function HomePage() {
                         </div>
                         <h3
                           className={`mt-3 font-semibold ${
-                            index === 1 ? "text-3xl leading-9" : "text-[28px] leading-8"
+                            index === 1 ? "text-[40px] leading-[44px]" : "text-[26px] leading-8"
                           }`}
                         >
                           {step.title}
                         </h3>
                         <p
                           className={`mt-3 text-slate-600 ${
-                            index === 1 ? "text-base leading-8" : "text-[15px] leading-8"
+                            index === 1 ? "text-lg leading-9" : "text-[15px] leading-8"
                           }`}
                         >
                           {step.description}
