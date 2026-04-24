@@ -56,10 +56,16 @@ export default function HomePage() {
               How it works
             </a>
             <Link
-              href="/login"
+              href="/login/driver"
               className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:border-slate-300"
             >
-              Partner login
+              Driver login
+            </Link>
+            <Link
+              href="/login/food-place"
+              className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:border-slate-300"
+            >
+              Food Place login
             </Link>
             <Link
               href="/login/customer"
