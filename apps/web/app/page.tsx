@@ -240,32 +240,36 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="grid max-w-6xl gap-6 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-center">
+              <div className="grid max-w-6xl gap-6 md:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_48px_minmax(0,1fr)_48px_minmax(0,1fr)] xl:items-center">
                 {steps.map((step, index) => (
-                  <div key={step.title} className="contents lg:block">
+                  <div key={step.title} className="contents xl:block">
                     <article
-                      className={`rounded-[36px] border bg-[#fff7f1] p-4 transition duration-200 hover:-translate-y-1 ${
+                      className={`mx-auto flex h-full w-full max-w-[380px] flex-col rounded-[36px] border bg-[#fff7f1] p-4 transition duration-200 hover:-translate-y-1 sm:p-5 ${
                         index === 1
-                          ? "border-orange-300 ring-1 ring-orange-200"
+                          ? "border-orange-300 shadow-[0_0_0_1px_rgba(255,98,0,0.18)] xl:scale-[1.03]"
                           : "border-slate-200"
                       }`}
                     >
-                      <JourneyPhone view={step.view} />
-                      <div className="px-3 pb-3 pt-1">
+                      <div className="mx-auto w-full max-w-[270px]">
+                        <JourneyPhone view={step.view} />
+                      </div>
+                      <div className="px-2 pb-3 pt-2 sm:px-3">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
                             {step.step}
                           </span>
                         </div>
-                        <h3 className="mt-3 text-[28px] font-semibold leading-8">{step.title}</h3>
-                        <p className="mt-3 text-base leading-7 text-slate-600">
+                        <h3 className="mt-3 text-3xl font-semibold leading-9">{step.title}</h3>
+                        <p className="mt-3 text-base leading-8 text-slate-600">
                           {step.description}
                         </p>
                       </div>
                     </article>
 
                     {index < steps.length - 1 ? (
-                      <div className="hidden text-4xl font-semibold text-orange-300 lg:block">→</div>
+                      <div className="hidden text-center text-4xl font-semibold text-orange-300 xl:block">
+                        →
+                      </div>
                     ) : null}
                   </div>
                 ))}
