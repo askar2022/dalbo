@@ -113,7 +113,8 @@ export function AuthForm() {
           return;
         }
 
-        const role = await fetchUserRole(data.user.id);
+        const signedInUser = data.user ?? data.session.user;
+        const role = await fetchUserRole(signedInUser.id);
         router.replace(getDashboardRoute(role));
         router.refresh();
         return;
@@ -128,7 +129,8 @@ export function AuthForm() {
         throw error;
       }
 
-      const role = await fetchUserRole(data.user.id);
+      const signedInUser = data.user ?? data.session.user;
+      const role = await fetchUserRole(signedInUser.id);
       router.replace(getDashboardRoute(role));
       router.refresh();
     } catch (error) {
