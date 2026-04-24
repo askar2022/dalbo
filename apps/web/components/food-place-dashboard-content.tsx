@@ -311,8 +311,8 @@ export function FoodPlaceDashboardContent() {
       is_open: true,
     };
 
-    const { data, error } = await supabase
-      .from("restaurants")
+    const { data, error } = await (supabase
+      .from("restaurants") as any)
       .insert(payload)
       .select("id")
       .single();
@@ -345,7 +345,7 @@ export function FoodPlaceDashboardContent() {
 
     setFormState({ type: "category", status: "submitting" });
 
-    const { error } = await supabase.from("menu_categories").insert({
+    const { error } = await (supabase.from("menu_categories") as any).insert({
       restaurant_id: selectedRestaurantId,
       name: categoryForm.name,
       sort_order: Number(categoryForm.sortOrder || "0"),
@@ -379,7 +379,7 @@ export function FoodPlaceDashboardContent() {
 
     setFormState({ type: "menuItem", status: "submitting" });
 
-    const { error } = await supabase.from("menu_items").insert({
+    const { error } = await (supabase.from("menu_items") as any).insert({
       restaurant_id: selectedRestaurantId,
       category_id: menuItemForm.categoryId || null,
       name: menuItemForm.name,

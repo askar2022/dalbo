@@ -296,7 +296,7 @@ export function DriverDashboardContent() {
     setProfileState({ status: "submitting" });
 
     const nextOnlineState = state.data?.profile?.is_online ?? true;
-    const { error } = await supabase.from("drivers").upsert(
+    const { error } = await (supabase.from("drivers") as any).upsert(
       {
         user_id: state.userId,
         vehicle_type: vehicleType || null,
@@ -328,7 +328,7 @@ export function DriverDashboardContent() {
     setProfileState({ status: "submitting" });
     const nextOnlineState = !(state.data?.profile?.is_online ?? false);
 
-    const { error } = await supabase.from("drivers").upsert(
+    const { error } = await (supabase.from("drivers") as any).upsert(
       {
         user_id: state.userId,
         vehicle_type: vehicleType || null,
@@ -382,7 +382,7 @@ export function DriverDashboardContent() {
       return;
     }
 
-    const assignmentResult = await supabase.from("driver_assignments").upsert(
+    const assignmentResult = await (supabase.from("driver_assignments") as any).upsert(
       {
         order_id: order.id,
         driver_id: state.userId,
@@ -434,7 +434,7 @@ export function DriverDashboardContent() {
     }
 
     const assignmentStatus = nextStatus === "picked_up" ? "picked_up" : "delivered";
-    const assignmentResult = await supabase.from("driver_assignments").upsert(
+    const assignmentResult = await (supabase.from("driver_assignments") as any).upsert(
       {
         order_id: order.id,
         driver_id: state.userId,

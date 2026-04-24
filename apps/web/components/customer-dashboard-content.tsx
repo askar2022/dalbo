@@ -419,8 +419,8 @@ export function CustomerDashboardContent() {
       const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
       const deliveryFee = 3.99;
 
-      const { data: order, error: orderError } = await supabase
-        .from("orders")
+      const { data: order, error: orderError } = await (supabase
+        .from("orders") as any)
         .insert({
           customer_id: session.user.id,
           restaurant_id: selectedRestaurantId,
@@ -437,7 +437,7 @@ export function CustomerDashboardContent() {
         throw orderError;
       }
 
-      const { error: orderItemsError } = await supabase.from("order_items").insert(
+      const { error: orderItemsError } = await (supabase.from("order_items") as any).insert(
         cartItems.map((item) => ({
           order_id: order.id,
           menu_item_id: item.id,
