@@ -72,6 +72,10 @@ export default function LoginPage() {
         </section>
 
         <div className="text-center text-sm text-slate-500">
+          <Link href="/about" className="font-semibold text-slate-600">
+            About Dalbo
+          </Link>
+          <span className="mx-2 text-slate-300">|</span>
           <Link href="/" className="font-semibold text-orange-600">
             Return to the Dalbo homepage
           </Link>

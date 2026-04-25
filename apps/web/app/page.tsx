@@ -6,15 +6,15 @@ type JourneyView = "discover" | "order" | "track";
 const benefitCards = [
   {
     title: "Fast ordering flow",
-    description: "A clean browse-to-checkout experience built to help customers order with less friction.",
+    description: "A clean browse-to-checkout experience built to keep ordering fast and simple.",
   },
   {
     title: "Real-time operations",
-    description: "Restaurants, drivers, and customers stay aligned with live order status updates.",
+    description: "Restaurants, drivers, and orders stay aligned with live status updates.",
   },
   {
     title: "One connected platform",
-    description: "Customers, restaurants, and drivers all stay connected through one Dalbo experience.",
+    description: "Restaurants, drivers, and delivery operations stay connected through one Dalbo experience.",
   },
 ];
 
@@ -217,6 +217,12 @@ export default function HomePage() {
               How it works
             </a>
             <Link
+              href="/about"
+              className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:border-slate-300"
+            >
+              About Dalbo
+            </Link>
+            <Link
               href="/login/driver"
               className="rounded-2xl border border-slate-200 px-4 py-2 text-slate-700 transition hover:border-slate-300"
             >
@@ -266,6 +272,12 @@ export default function HomePage() {
               >
                 Partner with Dalbo
               </Link>
+              <Link
+                href="/about"
+                className="rounded-2xl border border-slate-200 bg-white px-6 py-3 text-base font-semibold text-slate-700 transition hover:border-slate-300"
+              >
+                About Dalbo
+              </Link>
             </div>
 
             <div id="how-it-works" className="space-y-5">
@@ -277,8 +289,8 @@ export default function HomePage() {
                   From craving to delivery, made simple.
                 </h2>
                 <p className="text-base leading-7 text-slate-600">
-                  Everything a customer cares about comes down to three simple moments: find
-                  something good, order quickly, and track it all the way home.
+                  Everything comes down to three simple moments: find something good, order
+                  quickly, and track it all the way home.
                 </p>
               </div>
 
@@ -323,22 +335,22 @@ export default function HomePage() {
               A delivery brand that feels modern, simple, and ready to scale.
             </h2>
             <p className="text-base leading-7 text-slate-600">
-              Dalbo is built to make ordering feel easy for customers while still keeping restaurant
-              operations and delivery flow organized behind the scenes.
+              Dalbo is built to make ordering feel easy while still keeping restaurant operations
+              and delivery flow organized behind the scenes.
             </p>
           </div>
 
           <div className="rounded-[36px] border border-orange-100 bg-white p-7">
             <div className="rounded-[28px] bg-[#0b1020] p-6 text-white">
               <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-300">
-                Why customers choose Dalbo
+                Why teams choose Dalbo
               </p>
               <h3 className="mt-4 text-3xl font-semibold">
                 Fast ordering, clearer tracking, and trusted local restaurants.
               </h3>
               <p className="mt-4 text-sm leading-7 text-slate-300">
                 The experience is designed to feel simple on the surface while keeping every order
-                moving cleanly from restaurant to driver to customer.
+                moving cleanly from restaurant to delivery.
               </p>
             </div>
 
@@ -360,11 +372,11 @@ export default function HomePage() {
                 Ready To Launch
               </p>
               <h2 className="text-4xl font-bold tracking-tight">
-                Bring customers, restaurants, and drivers into one Dalbo experience.
+                Bring restaurants, drivers, and delivery operations into one Dalbo experience.
               </h2>
               <p className="max-w-2xl text-base leading-7 text-slate-300">
-                Join Dalbo today and start reaching more customers, managing orders, and
-                delivering with ease.
+                Join Dalbo today and start managing orders, coordinating deliveries, and growing
+                with ease.
               </p>
               <p className="text-sm font-medium text-orange-200">
                 Fast delivery. Trusted local partners.
