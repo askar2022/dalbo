@@ -3,21 +3,6 @@ import Link from "next/link";
 
 type JourneyView = "discover" | "order" | "track";
 
-const benefitCards = [
-  {
-    title: "Fast ordering flow",
-    description: "A clean browse-to-checkout experience built to keep ordering fast and simple.",
-  },
-  {
-    title: "Real-time operations",
-    description: "Restaurants, drivers, and orders stay aligned with live status updates.",
-  },
-  {
-    title: "One connected platform",
-    description: "Restaurants, drivers, and delivery operations stay connected through one Dalbo experience.",
-  },
-];
-
 const steps: Array<{
   step: string;
   title: string;
@@ -326,82 +311,6 @@ export default function HomePage() {
           </div>
         </section>
 
-        <section className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
-          <div className="space-y-5">
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-500">
-              Why Dalbo
-            </p>
-            <h2 className="text-4xl font-bold tracking-tight">
-              A delivery brand that feels modern, simple, and ready to scale.
-            </h2>
-            <p className="text-base leading-7 text-slate-600">
-              Dalbo is built to make ordering feel easy while still keeping restaurant operations
-              and delivery flow organized behind the scenes.
-            </p>
-          </div>
-
-          <div className="rounded-[36px] border border-orange-100 bg-white p-7">
-            <div className="rounded-[28px] bg-[#0b1020] p-6 text-white">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-300">
-                Why teams choose Dalbo
-              </p>
-              <h3 className="mt-4 text-3xl font-semibold">
-                Fast ordering, clearer tracking, and trusted local restaurants.
-              </h3>
-              <p className="mt-4 text-sm leading-7 text-slate-300">
-                The experience is designed to feel simple on the surface while keeping every order
-                moving cleanly from restaurant to delivery.
-              </p>
-            </div>
-
-            <div className="mt-6 grid gap-4">
-              {benefitCards.map((benefit) => (
-                <article key={benefit.title} className="rounded-3xl border border-slate-200 p-5">
-                  <h3 className="text-lg font-semibold">{benefit.title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">{benefit.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="rounded-[40px] bg-[#0b1020] px-8 py-10 text-white">
-          <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
-            <div className="space-y-4">
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-300">
-                Ready To Launch
-              </p>
-              <h2 className="text-4xl font-bold tracking-tight">
-                Bring restaurants, drivers, and delivery operations into one Dalbo experience.
-              </h2>
-              <p className="max-w-2xl text-base leading-7 text-slate-300">
-                Join Dalbo today and start managing orders, coordinating deliveries, and growing
-                with ease.
-              </p>
-              <p className="text-sm font-medium text-orange-200">
-                Fast delivery. Trusted local partners.
-              </p>
-              <p className="text-sm leading-6 text-slate-300">
-                Designed and implemented by Dr. Abdimalik Askar, powered by Automation, LLC.
-              </p>
-            </div>
-
-            <div className="flex flex-col gap-3 rounded-[32px] bg-white p-6 text-[#0b1020]">
-              <Link
-                href="/login/customer"
-                className="rounded-2xl bg-[#ff6200] px-5 py-3 text-center text-sm font-semibold text-white transition hover:bg-[#e35700]"
-              >
-                Start ordering
-              </Link>
-              <Link
-                href="/login"
-                className="rounded-2xl border border-slate-200 px-5 py-3 text-center text-sm font-semibold text-slate-700 transition hover:border-slate-300"
-              >
-                Partner with Dalbo
-              </Link>
-            </div>
-          </div>
-        </section>
       </div>
     </main>
   );
