@@ -240,7 +240,7 @@ export default function HomePage() {
         <section className="space-y-8">
           <div className="space-y-7">
             <span className="inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-              Food delivery for customers, restaurants, and drivers
+              Food delivery platform
             </span>
 
             <div className="space-y-5">
@@ -249,7 +249,7 @@ export default function HomePage() {
               </h1>
               <p className="max-w-2xl text-lg leading-8 text-slate-600">
                 Dalbo brings ordering, restaurant operations, and delivery management into one
-                simple experience so customers stay happy and partners stay in control.
+                simple connected experience.
               </p>
             </div>
 
