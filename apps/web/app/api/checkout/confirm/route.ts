@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripeClient } from "../../../../lib/stripe";
+import { notifyRestaurantAboutOrder } from "../../../../lib/restaurant-order-alerts";
 import {
   getSupabaseAuthClient,
   getSupabaseServiceRoleClient,
@@ -90,6 +91,12 @@ export async function POST(request: NextRequest) {
 
     if (updateError) {
       throw updateError;
+    }
+
+    if (isPaid) {
+      void notifyRestaurantAboutOrder(order.id).catch((error) => {
+        console.error("Unable to send restaurant order notification.", error);
+      });
     }
 
     return NextResponse.json({

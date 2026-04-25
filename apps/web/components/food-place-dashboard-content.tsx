@@ -2,7 +2,7 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { DashboardShell } from "./dashboard-shell";
-import { getFoodMediaPublicUrl } from "../lib/media";
+import { getDriverMediaPublicUrl, getFoodMediaPublicUrl } from "../lib/media";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser";
 
 type RestaurantRow = {
@@ -15,6 +15,19 @@ type RestaurantRow = {
   longitude: number | null;
   is_open: boolean;
   image_path: string | null;
+  order_notification_preference: "dashboard" | "email" | "sms" | "email_and_sms";
+};
+
+type RestaurantNotificationPreference = "dashboard" | "email" | "sms" | "email_and_sms";
+
+type RestaurantFormState = {
+  name: string;
+  description: string;
+  phone: string;
+  addressText: string;
+  latitude: string;
+  longitude: string;
+  orderNotificationPreference: RestaurantNotificationPreference;
 };
 
 type CategoryRow = {
@@ -39,6 +52,7 @@ type FoodPlaceDashboardData = {
   menuItems: MenuItemRow[];
   openOrders: number;
   incomingOrders: IncomingOrderRow[];
+  deliveredOrders: DeliveredOrderRow[];
 };
 
 type IncomingOrderItemRow = {
@@ -63,13 +77,40 @@ type IncomingOrderRow = {
   items: IncomingOrderItemRow[];
 };
 
-const initialRestaurantForm = {
+type DeliveredOrderRow = {
+  id: string;
+  restaurant_id: string;
+  restaurant_name: string;
+  status: string;
+  total: number;
+  placed_at: string;
+  notes: string | null;
+  driver_id: string | null;
+  driver_vehicle_type: string | null;
+  driver_license_plate: string | null;
+  driver_profile_photo_path: string | null;
+  driver_rating_average: number;
+  driver_rating_count: number;
+  restaurant_driver_rating: OrderRatingRow | null;
+  items: IncomingOrderItemRow[];
+};
+
+type OrderRatingRow = {
+  order_id: string;
+  target_type: "driver" | "restaurant";
+  target_id: string;
+  stars: number;
+  review: string | null;
+};
+
+const initialRestaurantForm: RestaurantFormState = {
   name: "",
   description: "",
   phone: "",
   addressText: "",
   latitude: "",
   longitude: "",
+  orderNotificationPreference: "dashboard",
 };
 
 const initialCategoryForm = {
@@ -92,7 +133,29 @@ function createRestaurantFormFromRow(restaurant: RestaurantRow | null) {
     addressText: restaurant?.address_text ?? "",
     latitude: restaurant?.latitude != null ? String(restaurant.latitude) : "",
     longitude: restaurant?.longitude != null ? String(restaurant.longitude) : "",
+    orderNotificationPreference: restaurant?.order_notification_preference ?? "dashboard",
   };
+}
+
+function getNotificationPreferenceLabel(
+  preference: RestaurantNotificationPreference,
+) {
+  switch (preference) {
+    case "email":
+      return "Email";
+    case "sms":
+      return "SMS";
+    case "email_and_sms":
+      return "Email + SMS";
+    default:
+      return "Dashboard only";
+  }
+}
+
+function notificationPreferenceNeedsSms(
+  preference: RestaurantNotificationPreference,
+) {
+  return preference === "sms" || preference === "email_and_sms";
 }
 
 function createMenuItemFormFromRow(item: MenuItemRow | null) {
@@ -122,6 +185,14 @@ function formatDateTime(value: string) {
     hour: "numeric",
     minute: "2-digit",
   }).format(new Date(value));
+}
+
+function formatRatingAverage(value: number) {
+  return value > 0 ? value.toFixed(1) : "New";
+}
+
+function getDriverRatingDraftKey(orderId: string) {
+  return `${orderId}:driver`;
 }
 
 function getNextOrderStatus(status: string) {
@@ -168,6 +239,14 @@ export function FoodPlaceDashboardContent() {
     message?: string;
   }>({ status: "idle" });
   const [orderState, setOrderState] = useState<{
+    status: "idle" | "submitting" | "success" | "error";
+    message?: string;
+    orderId?: string;
+  }>({ status: "idle" });
+  const [ratingDrafts, setRatingDrafts] = useState<Record<string, { stars: string; review: string }>>(
+    {},
+  );
+  const [ratingState, setRatingState] = useState<{
     status: "idle" | "submitting" | "success" | "error";
     message?: string;
     orderId?: string;
@@ -224,7 +303,9 @@ export function FoodPlaceDashboardContent() {
 
       const { data: restaurants, error: restaurantsError } = await supabase
         .from("restaurants")
-        .select("id, name, description, phone, address_text, latitude, longitude, is_open, image_path")
+        .select(
+          "id, name, description, phone, address_text, latitude, longitude, is_open, image_path, order_notification_preference",
+        )
         .eq("owner_id", session.user.id)
         .order("created_at", { ascending: false });
 
@@ -238,7 +319,13 @@ export function FoodPlaceDashboardContent() {
           ? preferredRestaurantId
           : restaurantRows[0]?.id ?? "";
 
-      const [categoriesResult, menuItemsResult, openOrdersResult, incomingOrdersResult] = await Promise.all([
+      const [
+        categoriesResult,
+        menuItemsResult,
+        openOrdersResult,
+        incomingOrdersResult,
+        deliveredOrdersResult,
+      ] = await Promise.all([
         resolvedRestaurantId
           ? supabase
               .from("menu_categories")
@@ -279,6 +366,21 @@ export function FoodPlaceDashboardContent() {
               .order("placed_at", { ascending: false })
               .limit(12)
           : Promise.resolve({ data: [], error: null }),
+        restaurantRows.length > 0
+          ? supabase
+              .from("orders")
+              .select(
+                "id, restaurant_id, status, total, placed_at, notes, driver_id, restaurants(name)",
+              )
+              .eq("payment_status", "paid")
+              .in(
+                "restaurant_id",
+                restaurantRows.map((restaurant) => restaurant.id),
+              )
+              .eq("status", "delivered")
+              .order("placed_at", { ascending: false })
+              .limit(8)
+          : Promise.resolve({ data: [], error: null }),
       ]);
 
       if (categoriesResult.error) {
@@ -297,6 +399,10 @@ export function FoodPlaceDashboardContent() {
         throw incomingOrdersResult.error;
       }
 
+      if (deliveredOrdersResult.error) {
+        throw deliveredOrdersResult.error;
+      }
+
       const rawOrders =
         (incomingOrdersResult.data as Array<{
           id: string;
@@ -311,7 +417,18 @@ export function FoodPlaceDashboardContent() {
           notes: string | null;
           restaurants: { name: string } | { name: string }[] | null;
         }> | null) ?? [];
-      const orderIds = rawOrders.map((order) => order.id);
+      const rawDeliveredOrders =
+        (deliveredOrdersResult.data as Array<{
+          id: string;
+          restaurant_id: string;
+          status: string;
+          total: number;
+          placed_at: string;
+          notes: string | null;
+          driver_id: string | null;
+          restaurants: { name: string } | { name: string }[] | null;
+        }> | null) ?? [];
+      const orderIds = [...rawOrders, ...rawDeliveredOrders].map((order) => order.id);
       const orderItemsResult =
         orderIds.length > 0
           ? await supabase
@@ -324,7 +441,74 @@ export function FoodPlaceDashboardContent() {
         throw orderItemsResult.error;
       }
 
+      const deliveredDriverIds = rawDeliveredOrders
+        .map((order) => order.driver_id)
+        .filter((value): value is string => Boolean(value));
+      const [driversResult, restaurantRatingsResult] = await Promise.all([
+        deliveredDriverIds.length > 0
+          ? supabase
+              .from("drivers")
+              .select(
+                "user_id, vehicle_type, license_plate, profile_photo_path, rating_average, rating_count",
+              )
+              .in("user_id", deliveredDriverIds)
+          : Promise.resolve({ data: [], error: null }),
+        rawDeliveredOrders.length > 0
+          ? supabase
+              .from("order_ratings")
+              .select("order_id, target_type, target_id, stars, review")
+              .eq("rater_user_id", session.user.id)
+              .eq("rater_role", "food_place")
+              .in(
+                "order_id",
+                rawDeliveredOrders.map((order) => order.id),
+              )
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+
+      if (driversResult.error) {
+        throw driversResult.error;
+      }
+
+      if (restaurantRatingsResult.error) {
+        throw restaurantRatingsResult.error;
+      }
+
       const incomingOrderItems = (orderItemsResult.data ?? []) as IncomingOrderItemRow[];
+      const deliveredDriversByUserId = ((driversResult.data ?? []) as Array<{
+        user_id: string;
+        vehicle_type: string | null;
+        license_plate: string | null;
+        profile_photo_path: string | null;
+        rating_average: number | null;
+        rating_count: number | null;
+      }>).reduce<
+        Record<
+          string,
+          {
+            vehicle_type: string | null;
+            license_plate: string | null;
+            profile_photo_path: string | null;
+            rating_average: number;
+            rating_count: number;
+          }
+        >
+      >((accumulator, driver) => {
+        accumulator[driver.user_id] = {
+          vehicle_type: driver.vehicle_type,
+          license_plate: driver.license_plate,
+          profile_photo_path: driver.profile_photo_path,
+          rating_average: Number(driver.rating_average ?? 0),
+          rating_count: Number(driver.rating_count ?? 0),
+        };
+        return accumulator;
+      }, {});
+      const deliveredRatingsByOrder = ((restaurantRatingsResult.data ?? []) as OrderRatingRow[]).reduce<
+        Record<string, OrderRatingRow>
+      >((accumulator, rating) => {
+        accumulator[getDriverRatingDraftKey(rating.order_id)] = rating;
+        return accumulator;
+      }, {});
       const itemsByOrderId = incomingOrderItems.reduce<Record<string, IncomingOrderItemRow[]>>(
         (accumulator, item) => {
           accumulator[item.order_id] ??= [];
@@ -350,7 +534,52 @@ export function FoodPlaceDashboardContent() {
         notes: order.notes,
         items: itemsByOrderId[order.id] ?? [],
       }));
+      const deliveredOrders: DeliveredOrderRow[] = rawDeliveredOrders.map((order) => ({
+        id: order.id,
+        restaurant_id: order.restaurant_id,
+        restaurant_name: Array.isArray(order.restaurants)
+          ? (order.restaurants[0]?.name ?? "Restaurant")
+          : (order.restaurants?.name ?? "Restaurant"),
+        status: order.status,
+        total: Number(order.total),
+        placed_at: order.placed_at,
+        notes: order.notes,
+        driver_id: order.driver_id,
+        driver_vehicle_type: order.driver_id
+          ? (deliveredDriversByUserId[order.driver_id]?.vehicle_type ?? null)
+          : null,
+        driver_license_plate: order.driver_id
+          ? (deliveredDriversByUserId[order.driver_id]?.license_plate ?? null)
+          : null,
+        driver_profile_photo_path: order.driver_id
+          ? (deliveredDriversByUserId[order.driver_id]?.profile_photo_path ?? null)
+          : null,
+        driver_rating_average: order.driver_id
+          ? (deliveredDriversByUserId[order.driver_id]?.rating_average ?? 0)
+          : 0,
+        driver_rating_count: order.driver_id
+          ? (deliveredDriversByUserId[order.driver_id]?.rating_count ?? 0)
+          : 0,
+        restaurant_driver_rating:
+          deliveredRatingsByOrder[getDriverRatingDraftKey(order.id)] ?? null,
+        items: itemsByOrderId[order.id] ?? [],
+      }));
 
+      setRatingDrafts(
+        deliveredOrders.reduce<Record<string, { stars: string; review: string }>>(
+          (accumulator, order) => {
+            if (order.restaurant_driver_rating) {
+              accumulator[getDriverRatingDraftKey(order.id)] = {
+                stars: String(order.restaurant_driver_rating.stars),
+                review: order.restaurant_driver_rating.review ?? "",
+              };
+            }
+
+            return accumulator;
+          },
+          {},
+        ),
+      );
       setSelectedRestaurantId(resolvedRestaurantId);
       setState({
         status: "ready",
@@ -361,6 +590,7 @@ export function FoodPlaceDashboardContent() {
           menuItems: (menuItemsResult.data ?? []) as MenuItemRow[],
           openOrders: openOrdersResult.count ?? 0,
           incomingOrders,
+          deliveredOrders,
         },
       });
     } catch (error) {
@@ -441,6 +671,18 @@ export function FoodPlaceDashboardContent() {
       return;
     }
 
+    if (
+      notificationPreferenceNeedsSms(restaurantForm.orderNotificationPreference) &&
+      !restaurantForm.phone.trim()
+    ) {
+      setFormState({
+        type: "restaurant",
+        status: "error",
+        message: "Add a restaurant phone number if you want SMS order alerts.",
+      });
+      return;
+    }
+
     setFormState({ type: "restaurant", status: "submitting" });
 
     let imagePath: string | null = null;
@@ -469,6 +711,7 @@ export function FoodPlaceDashboardContent() {
       longitude: restaurantForm.longitude ? Number(restaurantForm.longitude) : null,
       is_open: true,
       image_path: imagePath,
+      order_notification_preference: restaurantForm.orderNotificationPreference,
     };
 
     const { data, error } = await (supabase
@@ -588,6 +831,18 @@ export function FoodPlaceDashboardContent() {
       return;
     }
 
+    if (
+      notificationPreferenceNeedsSms(restaurantEditForm.orderNotificationPreference) &&
+      !restaurantEditForm.phone.trim()
+    ) {
+      setFormState({
+        type: "restaurantUpdate",
+        status: "error",
+        message: "Add a restaurant phone number if you want SMS order alerts.",
+      });
+      return;
+    }
+
     setFormState({ type: "restaurantUpdate", status: "submitting" });
 
     let imagePath = selectedRestaurant.image_path;
@@ -615,6 +870,7 @@ export function FoodPlaceDashboardContent() {
         latitude: restaurantEditForm.latitude ? Number(restaurantEditForm.latitude) : null,
         longitude: restaurantEditForm.longitude ? Number(restaurantEditForm.longitude) : null,
         image_path: imagePath,
+        order_notification_preference: restaurantEditForm.orderNotificationPreference,
       })
       .eq("id", selectedRestaurantId);
 
@@ -808,10 +1064,64 @@ export function FoodPlaceDashboardContent() {
     await loadDashboard(selectedRestaurantId);
   }
 
+  async function handleSubmitDriverRating(order: DeliveredOrderRow) {
+    const draftKey = getDriverRatingDraftKey(order.id);
+    const draft = ratingDrafts[draftKey];
+    const stars = Number(draft?.stars ?? "0");
+
+    if (!order.driver_id) {
+      return;
+    }
+
+    if (!Number.isInteger(stars) || stars < 1 || stars > 5) {
+      setRatingState({
+        status: "error",
+        orderId: order.id,
+        message: "Choose a star rating from 1 to 5.",
+      });
+      return;
+    }
+
+    setRatingState({
+      status: "submitting",
+      orderId: order.id,
+    });
+
+    const { error } = await (supabase.from("order_ratings") as any).upsert(
+      {
+        order_id: order.id,
+        rater_user_id: state.userId,
+        rater_role: "food_place",
+        target_type: "driver",
+        target_id: order.driver_id,
+        stars,
+        review: draft?.review?.trim() ? draft.review.trim() : null,
+      },
+      { onConflict: "order_id,rater_user_id,target_type,target_id" },
+    );
+
+    if (error) {
+      setRatingState({
+        status: "error",
+        orderId: order.id,
+        message: error.message,
+      });
+      return;
+    }
+
+    setRatingState({
+      status: "success",
+      orderId: order.id,
+      message: "Driver rating saved.",
+    });
+    await loadDashboard(selectedRestaurantId);
+  }
+
   const restaurants = state.data?.restaurants ?? [];
   const categories = state.data?.categories ?? [];
   const menuItems = state.data?.menuItems ?? [];
   const incomingOrders = state.data?.incomingOrders ?? [];
+  const deliveredOrders = state.data?.deliveredOrders ?? [];
   const selectedRestaurant =
     restaurants.find((restaurant) => restaurant.id === selectedRestaurantId) ?? null;
   const selectedRestaurantImageUrl = getFoodMediaPublicUrl(selectedRestaurant?.image_path);
@@ -982,6 +1292,170 @@ export function FoodPlaceDashboardContent() {
 
         <section className="space-y-4">
           <div>
+            <h2 className="text-2xl font-semibold">Delivered orders</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Completed orders stay here so the restaurant can rate the driver after delivery.
+            </p>
+          </div>
+
+          {deliveredOrders.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5 text-sm text-slate-600">
+              No delivered orders yet.
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {deliveredOrders.map((order) => {
+                const driverPhotoUrl = getDriverMediaPublicUrl(order.driver_profile_photo_path);
+                const draftKey = getDriverRatingDraftKey(order.id);
+                const draft = ratingDrafts[draftKey] ?? { stars: "", review: "" };
+
+                return (
+                  <article key={order.id} className="rounded-3xl border border-slate-200 bg-white p-5">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <h3 className="text-lg font-semibold">{order.restaurant_name}</h3>
+                          <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
+                            Delivered
+                          </span>
+                        </div>
+                        <p className="text-sm text-slate-600">Placed {formatDateTime(order.placed_at)}</p>
+                        <p className="text-sm text-slate-600">Order ID: {order.id}</p>
+                      </div>
+
+                      <div className="space-y-2 text-sm md:text-right">
+                        <p className="font-semibold text-slate-900">{formatCurrency(order.total)}</p>
+                        <p className="text-slate-600">
+                          Driver rating: {formatRatingAverage(order.driver_rating_average)} stars (
+                          {order.driver_rating_count})
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-2">
+                      {order.items.map((item) => (
+                        <div
+                          key={`${order.id}-${item.item_name}`}
+                          className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600"
+                        >
+                          <span>
+                            {item.quantity} x {item.item_name}
+                          </span>
+                          <span>{formatCurrency(Number(item.line_total))}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {order.notes ? (
+                      <div className="mt-4 rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
+                        <span className="font-semibold text-slate-900">Notes:</span> {order.notes}
+                      </div>
+                    ) : null}
+
+                    <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                        <div className="flex items-center gap-4">
+                          {driverPhotoUrl ? (
+                            <img
+                              src={driverPhotoUrl}
+                              alt="Driver"
+                              className="h-20 w-20 rounded-3xl object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-20 w-20 items-center justify-center rounded-3xl border border-dashed border-slate-200 bg-white text-center text-xs font-semibold text-slate-500">
+                              No driver photo
+                            </div>
+                          )}
+                          <div className="space-y-1 text-sm text-slate-600">
+                            <p className="font-semibold text-slate-900">Assigned driver</p>
+                            <p>Vehicle: {order.driver_vehicle_type || "Not added yet"}</p>
+                            <p>Plate: {order.driver_license_plate || "Not added yet"}</p>
+                          </div>
+                        </div>
+                        {order.restaurant_driver_rating ? (
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-700">
+                            Rating saved
+                          </span>
+                        ) : null}
+                      </div>
+
+                      {order.driver_id ? (
+                        <div className="mt-4 space-y-3">
+                          <select
+                            value={draft.stars}
+                            onChange={(event) =>
+                              setRatingDrafts((current) => ({
+                                ...current,
+                                [draftKey]: {
+                                  ...draft,
+                                  stars: event.target.value,
+                                },
+                              }))
+                            }
+                            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-orange-400"
+                          >
+                            <option value="">Select stars</option>
+                            {[5, 4, 3, 2, 1].map((value) => (
+                              <option key={value} value={value}>
+                                {value} star{value === 1 ? "" : "s"}
+                              </option>
+                            ))}
+                          </select>
+                          <textarea
+                            value={draft.review}
+                            onChange={(event) =>
+                              setRatingDrafts((current) => ({
+                                ...current,
+                                [draftKey]: {
+                                  ...draft,
+                                  review: event.target.value,
+                                },
+                              }))
+                            }
+                            rows={3}
+                            className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-orange-400"
+                            placeholder="Optional review for the driver"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleSubmitDriverRating(order)}
+                            disabled={
+                              ratingState.status === "submitting" && ratingState.orderId === order.id
+                            }
+                            className="rounded-2xl bg-[#ff6200] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#e35700] disabled:opacity-60"
+                          >
+                            {ratingState.status === "submitting" && ratingState.orderId === order.id
+                              ? "Saving..."
+                              : "Save driver rating"}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-4 rounded-2xl bg-white px-4 py-3 text-sm text-slate-600">
+                          No driver was assigned to this order.
+                        </div>
+                      )}
+
+                      {ratingState.message && ratingState.orderId === order.id ? (
+                        <p
+                          className={`mt-4 rounded-2xl px-4 py-3 text-sm ${
+                            ratingState.status === "error"
+                              ? "bg-red-50 text-red-700"
+                              : "bg-green-50 text-green-700"
+                          }`}
+                        >
+                          {ratingState.message}
+                        </p>
+                      ) : null}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+        <section className="space-y-4">
+          <div>
             <h2 className="text-2xl font-semibold">Restaurant setup</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Create the storefront tied to this food place login, including the main photo that
@@ -1013,6 +1487,34 @@ export function FoodPlaceDashboardContent() {
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
                 placeholder="+1 555 0100"
               />
+            </label>
+
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">
+                How do you want to receive new orders?
+              </span>
+              <select
+                value={restaurantForm.orderNotificationPreference}
+                onChange={(event) =>
+                  setRestaurantForm((current) => ({
+                    ...current,
+                    orderNotificationPreference: event.target.value as
+                      | "dashboard"
+                      | "email"
+                      | "sms"
+                      | "email_and_sms",
+                  }))
+                }
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+              >
+                <option value="dashboard">Dashboard only</option>
+                <option value="email">Email</option>
+                <option value="sms">SMS</option>
+                <option value="email_and_sms">Email + SMS</option>
+              </select>
+              <p className="mt-2 text-xs text-slate-500">
+                Email uses the food place login email. SMS uses the restaurant phone number.
+              </p>
             </label>
 
             <label className="block md:col-span-2">
@@ -1195,6 +1697,12 @@ export function FoodPlaceDashboardContent() {
                       </div>
                       <p>{selectedRestaurant.description || "No description yet."}</p>
                       <p>{selectedRestaurant.address_text || "No address yet."}</p>
+                      <p>
+                        New orders:{" "}
+                        {getNotificationPreferenceLabel(
+                          selectedRestaurant.order_notification_preference,
+                        )}
+                      </p>
                     </div>
                   </div>
 
@@ -1231,6 +1739,34 @@ export function FoodPlaceDashboardContent() {
                         }
                         className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
                       />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">
+                        How do you want to receive new orders?
+                      </span>
+                      <select
+                        value={restaurantEditForm.orderNotificationPreference}
+                        onChange={(event) =>
+                          setRestaurantEditForm((current) => ({
+                            ...current,
+                            orderNotificationPreference: event.target.value as
+                              | "dashboard"
+                              | "email"
+                              | "sms"
+                              | "email_and_sms",
+                          }))
+                        }
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                      >
+                        <option value="dashboard">Dashboard only</option>
+                        <option value="email">Email</option>
+                        <option value="sms">SMS</option>
+                        <option value="email_and_sms">Email + SMS</option>
+                      </select>
+                      <p className="mt-2 text-xs text-slate-500">
+                        Email uses the food place login email. SMS uses the restaurant phone number.
+                      </p>
                     </label>
 
                     <label className="block md:col-span-2">

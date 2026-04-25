@@ -35,6 +35,7 @@ type AuthFormProps = {
   allowSignUp?: boolean;
   allowedMethods?: AuthMethod[];
   methodSelectionMode?: "tabs" | "fallback";
+  signInAcknowledgementLabel?: string;
 };
 
 async function fetchUserRole(userId: string) {
@@ -64,6 +65,7 @@ export function AuthForm({
   allowSignUp = true,
   allowedMethods = ["email", "sms"],
   methodSelectionMode = "tabs",
+  signInAcknowledgementLabel,
 }: AuthFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
@@ -80,6 +82,7 @@ export function AuthForm({
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasAcceptedSignInAcknowledgement, setHasAcceptedSignInAcknowledgement] = useState(false);
 
   async function sendSecurityAlert({
     eventType,
@@ -128,6 +131,10 @@ export function AuthForm({
     setIsSubmitting(true);
 
     try {
+      if (mode === "sign_in" && signInAcknowledgementLabel && !hasAcceptedSignInAcknowledgement) {
+        throw new Error("You must agree that you use your own insurance before signing in.");
+      }
+
       if (method === "sms") {
         if (otpStep === "request") {
           const { error } = await supabase.auth.signInWithOtp({
@@ -499,6 +506,19 @@ export function AuthForm({
             <p className="rounded-2xl bg-green-50 px-4 py-3 text-sm text-green-700">
               {successMessage}
             </p>
+          ) : null}
+
+          {mode === "sign_in" && signInAcknowledgementLabel ? (
+            <label className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={hasAcceptedSignInAcknowledgement}
+                onChange={(event) => setHasAcceptedSignInAcknowledgement(event.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-orange-600 focus:ring-orange-500"
+                required
+              />
+              <span>{signInAcknowledgementLabel}</span>
+            </label>
           ) : null}
 
           <button

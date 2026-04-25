@@ -293,13 +293,13 @@ export default function HomePage() {
                         <JourneyPhone view={step.view} />
                         </div>
                       </div>
-                      <div className="flex flex-1 flex-col px-2 pb-3 pt-4 sm:px-3">
+                      <div className="flex flex-1 flex-col px-2 pb-3 pt-8 sm:px-3">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
                             {step.step}
                           </span>
                         </div>
-                        <h3 className="mt-3 text-[26px] font-semibold leading-8 sm:text-[30px] sm:leading-9">
+                        <h3 className="mt-4 text-[26px] font-semibold leading-8 sm:text-[30px] sm:leading-9">
                           {step.title}
                         </h3>
                         <p className="mt-3 text-[15px] leading-8 text-slate-600 sm:text-base">

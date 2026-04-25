@@ -7,14 +7,17 @@ export default function DriverLoginPage() {
         <AuthForm
           audience="driver"
           badge="Driver login"
-          title="Sign in to accept deliveries, follow routes, and update trip status."
-          description="This page is for Dalbo drivers only. Use your assigned account to access delivery jobs and active trips."
+          title="Sign in to go online, accept delivery jobs, and complete active trips."
+          description="Use your Dalbo driver account to see ready pickups, manage active deliveries, and move each order from pickup to dropoff."
           infoTitle="Driver access"
           infoItems={[
             "Use the driver email account already created for you.",
-            "Go online, accept ready jobs, and mark deliveries complete.",
-            "If you need a new account, contact Dalbo support or your dispatcher.",
+            "Go online only when you are ready to accept deliveries.",
+            "Accept ready jobs, confirm pickup, and mark each trip delivered.",
+            "Dalbo does not cover your delivery insurance. You must use your own insurance while delivering customer food orders.",
+            "If you need a new driver account, contact Dalbo support or your dispatcher.",
           ]}
+          signInAcknowledgementLabel="I understand that Dalbo does not provide delivery insurance. I am responsible for my own insurance coverage while delivering food to customers."
           homeHref="/login"
           homeLabel="Choose another login type"
           allowSignUp={false}

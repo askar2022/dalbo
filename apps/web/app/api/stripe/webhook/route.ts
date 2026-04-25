@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { notifyRestaurantAboutOrder } from "../../../../lib/restaurant-order-alerts";
 import { getStripeClient } from "../../../../lib/stripe";
 import { getSupabaseServiceRoleClient } from "../../../../lib/supabase-server";
 
@@ -45,6 +46,14 @@ async function updateOrderFromSession(session: Stripe.Checkout.Session) {
     stripe_payment_intent_id: paymentIntentId,
     paid_at: session.payment_status === "paid" ? new Date().toISOString() : null,
   });
+
+  if (session.payment_status === "paid") {
+    try {
+      await notifyRestaurantAboutOrder(orderId);
+    } catch (error) {
+      console.error("Unable to send restaurant order notification.", error);
+    }
+  }
 }
 
 async function updateOrderFromPaymentIntent(
