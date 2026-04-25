@@ -12,12 +12,12 @@ export default function LoginPage() {
             Choose how you want to enter Dalbo.
           </h1>
           <p className="mx-auto max-w-2xl text-lg text-slate-600">
-            Customers should start ordering, while drivers and food places should use their own
-            partner login pages.
+            Customers should start ordering, while drivers, food places, and admins should use
+            their own login pages.
           </p>
         </section>
 
-        <section className="grid gap-6 md:grid-cols-3">
+        <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
           <Link
             href="/login/customer"
             className="rounded-[32px] border border-slate-200 bg-white p-6 transition hover:border-orange-200"
@@ -54,6 +54,19 @@ export default function LoginPage() {
             <h2 className="mt-4 text-2xl font-semibold">Driver login</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">
               Accept jobs, update trip status, and complete deliveries.
+            </p>
+          </Link>
+
+          <Link
+            href="/login/admin"
+            className="rounded-[32px] border border-slate-200 bg-white p-6 transition hover:border-orange-200"
+          >
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
+              Admin
+            </p>
+            <h2 className="mt-4 text-2xl font-semibold">Admin login</h2>
+            <p className="mt-3 text-sm leading-7 text-slate-600">
+              Review platform activity, partner operations, and live order health.
             </p>
           </Link>
         </section>

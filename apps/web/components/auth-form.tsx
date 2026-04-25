@@ -8,7 +8,7 @@ import { getSupabaseBrowserClient } from "../lib/supabase-browser";
 
 type AuthMode = "sign_in" | "sign_up";
 type AuthMethod = "email" | "sms";
-type AuthAudience = "customer" | "driver" | "food_place";
+type AuthAudience = "customer" | "driver" | "food_place" | "admin";
 type SecurityAlertEvent = "sign_in" | "account_created";
 type SendSecurityAlertOptions = {
   eventType: SecurityAlertEvent;
@@ -426,7 +426,13 @@ export function AuthForm({
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
                   className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
-                  placeholder={audience === "driver" ? "Driver full name" : "Business owner name"}
+                  placeholder={
+                    audience === "driver"
+                      ? "Driver full name"
+                      : audience === "admin"
+                        ? "Admin full name"
+                        : "Business owner name"
+                  }
                   required
                 />
               </label>
@@ -447,7 +453,9 @@ export function AuthForm({
                       ? "customer@dalbo.app"
                       : audience === "driver"
                         ? "driver@dalbo.app"
-                        : "foodplace@dalbo.app"
+                        : audience === "admin"
+                          ? "admin@dalbo.app"
+                          : "foodplace@dalbo.app"
                   }
                   required
                 />
@@ -547,7 +555,9 @@ export function AuthForm({
                     ? "Start ordering"
                     : audience === "driver"
                       ? "Driver sign in"
-                      : "Food Place sign in"
+                      : audience === "admin"
+                        ? "Admin sign in"
+                        : "Food Place sign in"
                   : audience === "customer"
                     ? "Create customer account"
                     : "Create account"}
