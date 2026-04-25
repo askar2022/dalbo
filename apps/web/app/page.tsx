@@ -203,7 +203,7 @@ export default function HomePage() {
         <header className="flex flex-col gap-5 rounded-[36px] border border-orange-100 bg-white px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <Image
-              src="/logo_dalbo.svg"
+              src="/logo_dalbo.png"
               alt="Dalbo logo"
               width={170}
               height={52}
