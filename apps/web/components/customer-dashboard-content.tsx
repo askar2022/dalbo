@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { DashboardShell } from "./dashboard-shell";
+import { getFoodMediaPublicUrl } from "../lib/media";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser";
 import { calculateOrderPricing } from "../lib/order-pricing";
 
@@ -11,6 +12,7 @@ type RestaurantRow = {
   description: string | null;
   address_text: string | null;
   is_open: boolean;
+  image_path: string | null;
 };
 
 type DashboardData = {
@@ -34,6 +36,7 @@ type MenuItemRow = {
   price: number;
   is_available: boolean;
   category_id: string | null;
+  image_path: string | null;
 };
 
 type CartItem = {
@@ -147,7 +150,7 @@ export function CustomerDashboardContent() {
       ] = await Promise.all([
         supabase
           .from("restaurants")
-          .select("id, name, description, address_text, is_open")
+          .select("id, name, description, address_text, is_open, image_path")
           .order("created_at", { ascending: false }),
         supabase
           .from("orders")
@@ -422,7 +425,7 @@ export function CustomerDashboardContent() {
           .order("sort_order", { ascending: true }),
         supabase
           .from("menu_items")
-          .select("id, name, description, price, is_available, category_id")
+          .select("id, name, description, price, is_available, category_id, image_path")
           .eq("restaurant_id", selectedRestaurantId)
           .order("created_at", { ascending: false }),
       ]);
@@ -729,6 +732,17 @@ export function CustomerDashboardContent() {
                               : "border-slate-200 bg-white hover:border-orange-200 hover:bg-[#fffaf5]"
                           }`}
                         >
+                          {restaurant.image_path ? (
+                            <img
+                              src={getFoodMediaPublicUrl(restaurant.image_path) ?? ""}
+                              alt={restaurant.name}
+                              className="mb-4 h-40 w-full rounded-[22px] object-cover"
+                            />
+                          ) : (
+                            <div className="mb-4 flex h-40 items-center justify-center rounded-[22px] bg-[#fff7f1] text-sm font-semibold text-orange-600">
+                              No cover photo yet
+                            </div>
+                          )}
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="text-lg font-semibold text-slate-900">{restaurant.name}</p>
@@ -764,6 +778,13 @@ export function CustomerDashboardContent() {
                     <section className="rounded-[32px] border border-slate-200 bg-white p-6">
                       {selectedRestaurant ? (
                         <div className="space-y-6">
+                          {selectedRestaurant.image_path ? (
+                            <img
+                              src={getFoodMediaPublicUrl(selectedRestaurant.image_path) ?? ""}
+                              alt={selectedRestaurant.name}
+                              className="h-56 w-full rounded-[28px] object-cover"
+                            />
+                          ) : null}
                           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
                             <div className="space-y-3">
                               <div className="flex flex-wrap items-center gap-3">
@@ -893,6 +914,17 @@ export function CustomerDashboardContent() {
                                 key={item.id}
                                 className="rounded-[28px] border border-slate-200 bg-[#fffaf5] p-5"
                               >
+                                {item.image_path ? (
+                                  <img
+                                    src={getFoodMediaPublicUrl(item.image_path) ?? ""}
+                                    alt={item.name}
+                                    className="mb-4 h-44 w-full rounded-[22px] object-cover"
+                                  />
+                                ) : (
+                                  <div className="mb-4 flex h-44 items-center justify-center rounded-[22px] bg-white text-sm font-semibold text-slate-400">
+                                    Photo coming soon
+                                  </div>
+                                )}
                                 <div className="flex items-start justify-between gap-4">
                                   <div className="space-y-3">
                                     <div className="flex flex-wrap items-center gap-2">

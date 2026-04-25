@@ -2,14 +2,19 @@
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { DashboardShell } from "./dashboard-shell";
+import { getFoodMediaPublicUrl } from "../lib/media";
 import { getSupabaseBrowserClient } from "../lib/supabase-browser";
 
 type RestaurantRow = {
   id: string;
   name: string;
   description: string | null;
+  phone: string | null;
   address_text: string | null;
+  latitude: number | null;
+  longitude: number | null;
   is_open: boolean;
+  image_path: string | null;
 };
 
 type CategoryRow = {
@@ -25,6 +30,7 @@ type MenuItemRow = {
   price: number;
   is_available: boolean;
   category_id: string | null;
+  image_path: string | null;
 };
 
 type FoodPlaceDashboardData = {
@@ -78,6 +84,26 @@ const initialMenuItemForm = {
   categoryId: "",
 };
 
+function createRestaurantFormFromRow(restaurant: RestaurantRow | null) {
+  return {
+    name: restaurant?.name ?? "",
+    description: restaurant?.description ?? "",
+    phone: restaurant?.phone ?? "",
+    addressText: restaurant?.address_text ?? "",
+    latitude: restaurant?.latitude != null ? String(restaurant.latitude) : "",
+    longitude: restaurant?.longitude != null ? String(restaurant.longitude) : "",
+  };
+}
+
+function createMenuItemFormFromRow(item: MenuItemRow | null) {
+  return {
+    name: item?.name ?? "",
+    description: item?.description ?? "",
+    price: item ? String(Number(item.price)) : "",
+    categoryId: item?.category_id ?? "",
+  };
+}
+
 function formatCurrency(value: number) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -117,8 +143,27 @@ export function FoodPlaceDashboardContent() {
   const [restaurantForm, setRestaurantForm] = useState(initialRestaurantForm);
   const [categoryForm, setCategoryForm] = useState(initialCategoryForm);
   const [menuItemForm, setMenuItemForm] = useState(initialMenuItemForm);
+  const [restaurantEditForm, setRestaurantEditForm] = useState(initialRestaurantForm);
+  const [menuItemEditForm, setMenuItemEditForm] = useState(initialMenuItemForm);
+  const [restaurantImageFile, setRestaurantImageFile] = useState<File | null>(null);
+  const [menuItemImageFile, setMenuItemImageFile] = useState<File | null>(null);
+  const [restaurantEditImageFile, setRestaurantEditImageFile] = useState<File | null>(null);
+  const [menuItemEditImageFile, setMenuItemEditImageFile] = useState<File | null>(null);
+  const [restaurantImagePreviewUrl, setRestaurantImagePreviewUrl] = useState("");
+  const [menuItemImagePreviewUrl, setMenuItemImagePreviewUrl] = useState("");
+  const [restaurantEditImagePreviewUrl, setRestaurantEditImagePreviewUrl] = useState("");
+  const [menuItemEditImagePreviewUrl, setMenuItemEditImagePreviewUrl] = useState("");
+  const [editingMenuItemId, setEditingMenuItemId] = useState("");
   const [formState, setFormState] = useState<{
-    type?: "restaurant" | "category" | "menuItem";
+    type?:
+      | "restaurant"
+      | "restaurantUpdate"
+      | "restaurantAvailability"
+      | "category"
+      | "menuItem"
+      | "menuItemUpdate"
+      | "menuItemDelete"
+      | "menuItemAvailability";
     status?: "idle" | "submitting" | "success" | "error";
     message?: string;
   }>({ status: "idle" });
@@ -127,6 +172,40 @@ export function FoodPlaceDashboardContent() {
     message?: string;
     orderId?: string;
   }>({ status: "idle" });
+
+  async function uploadFoodPlaceImage(file: File, kind: "restaurant" | "menu-item") {
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+
+    if (sessionError) {
+      throw sessionError;
+    }
+
+    if (!session) {
+      throw new Error("No active session found.");
+    }
+
+    const formData = new FormData();
+    formData.append("kind", kind);
+    formData.append("file", file);
+
+    const response = await fetch("/api/food-place/upload-image", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: formData,
+    });
+    const payload = (await response.json()) as { path?: string; error?: string };
+
+    if (!response.ok || !payload.path) {
+      throw new Error(payload.error || "Unable to upload the image right now.");
+    }
+
+    return payload.path;
+  }
 
   async function loadDashboard(preferredRestaurantId?: string) {
     try {
@@ -145,7 +224,7 @@ export function FoodPlaceDashboardContent() {
 
       const { data: restaurants, error: restaurantsError } = await supabase
         .from("restaurants")
-        .select("id, name, description, address_text, is_open")
+        .select("id, name, description, phone, address_text, latitude, longitude, is_open, image_path")
         .eq("owner_id", session.user.id)
         .order("created_at", { ascending: false });
 
@@ -170,7 +249,7 @@ export function FoodPlaceDashboardContent() {
         resolvedRestaurantId
           ? supabase
               .from("menu_items")
-              .select("id, name, description, price, is_available, category_id")
+              .select("id, name, description, price, is_available, category_id, image_path")
               .eq("restaurant_id", resolvedRestaurantId)
               .order("created_at", { ascending: false })
           : Promise.resolve({ data: [], error: null }),
@@ -299,6 +378,62 @@ export function FoodPlaceDashboardContent() {
     void loadDashboard();
   }, []);
 
+  useEffect(() => {
+    if (!restaurantImageFile) {
+      setRestaurantImagePreviewUrl("");
+      return;
+    }
+
+    const nextUrl = URL.createObjectURL(restaurantImageFile);
+    setRestaurantImagePreviewUrl(nextUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextUrl);
+    };
+  }, [restaurantImageFile]);
+
+  useEffect(() => {
+    if (!menuItemImageFile) {
+      setMenuItemImagePreviewUrl("");
+      return;
+    }
+
+    const nextUrl = URL.createObjectURL(menuItemImageFile);
+    setMenuItemImagePreviewUrl(nextUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextUrl);
+    };
+  }, [menuItemImageFile]);
+
+  useEffect(() => {
+    if (!restaurantEditImageFile) {
+      setRestaurantEditImagePreviewUrl("");
+      return;
+    }
+
+    const nextUrl = URL.createObjectURL(restaurantEditImageFile);
+    setRestaurantEditImagePreviewUrl(nextUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextUrl);
+    };
+  }, [restaurantEditImageFile]);
+
+  useEffect(() => {
+    if (!menuItemEditImageFile) {
+      setMenuItemEditImagePreviewUrl("");
+      return;
+    }
+
+    const nextUrl = URL.createObjectURL(menuItemEditImageFile);
+    setMenuItemEditImagePreviewUrl(nextUrl);
+
+    return () => {
+      URL.revokeObjectURL(nextUrl);
+    };
+  }, [menuItemEditImageFile]);
+
   async function handleCreateRestaurant(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -307,6 +442,22 @@ export function FoodPlaceDashboardContent() {
     }
 
     setFormState({ type: "restaurant", status: "submitting" });
+
+    let imagePath: string | null = null;
+
+    try {
+      if (restaurantImageFile) {
+        imagePath = await uploadFoodPlaceImage(restaurantImageFile, "restaurant");
+      }
+    } catch (error) {
+      setFormState({
+        type: "restaurant",
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to upload the restaurant image right now.",
+      });
+      return;
+    }
 
     const payload = {
       owner_id: state.userId,
@@ -317,6 +468,7 @@ export function FoodPlaceDashboardContent() {
       latitude: restaurantForm.latitude ? Number(restaurantForm.latitude) : null,
       longitude: restaurantForm.longitude ? Number(restaurantForm.longitude) : null,
       is_open: true,
+      image_path: imagePath,
     };
 
     const { data, error } = await (supabase
@@ -331,6 +483,7 @@ export function FoodPlaceDashboardContent() {
     }
 
     setRestaurantForm(initialRestaurantForm);
+    setRestaurantImageFile(null);
     setFormState({
       type: "restaurant",
       status: "success",
@@ -387,6 +540,22 @@ export function FoodPlaceDashboardContent() {
 
     setFormState({ type: "menuItem", status: "submitting" });
 
+    let imagePath: string | null = null;
+
+    try {
+      if (menuItemImageFile) {
+        imagePath = await uploadFoodPlaceImage(menuItemImageFile, "menu-item");
+      }
+    } catch (error) {
+      setFormState({
+        type: "menuItem",
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to upload the menu image right now.",
+      });
+      return;
+    }
+
     const { error } = await (supabase.from("menu_items") as any).insert({
       restaurant_id: selectedRestaurantId,
       category_id: menuItemForm.categoryId || null,
@@ -394,6 +563,7 @@ export function FoodPlaceDashboardContent() {
       description: menuItemForm.description || null,
       price: Number(menuItemForm.price),
       is_available: true,
+      image_path: imagePath,
     });
 
     if (error) {
@@ -402,10 +572,209 @@ export function FoodPlaceDashboardContent() {
     }
 
     setMenuItemForm(initialMenuItemForm);
+    setMenuItemImageFile(null);
     setFormState({
       type: "menuItem",
       status: "success",
       message: "Menu item created successfully.",
+    });
+    await loadDashboard(selectedRestaurantId);
+  }
+
+  async function handleUpdateRestaurant(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!selectedRestaurantId || !selectedRestaurant) {
+      return;
+    }
+
+    setFormState({ type: "restaurantUpdate", status: "submitting" });
+
+    let imagePath = selectedRestaurant.image_path;
+
+    try {
+      if (restaurantEditImageFile) {
+        imagePath = await uploadFoodPlaceImage(restaurantEditImageFile, "restaurant");
+      }
+    } catch (error) {
+      setFormState({
+        type: "restaurantUpdate",
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to upload the restaurant image right now.",
+      });
+      return;
+    }
+
+    const { error } = await (supabase.from("restaurants") as any)
+      .update({
+        name: restaurantEditForm.name,
+        description: restaurantEditForm.description || null,
+        phone: restaurantEditForm.phone || null,
+        address_text: restaurantEditForm.addressText || null,
+        latitude: restaurantEditForm.latitude ? Number(restaurantEditForm.latitude) : null,
+        longitude: restaurantEditForm.longitude ? Number(restaurantEditForm.longitude) : null,
+        image_path: imagePath,
+      })
+      .eq("id", selectedRestaurantId);
+
+    if (error) {
+      setFormState({ type: "restaurantUpdate", status: "error", message: error.message });
+      return;
+    }
+
+    setRestaurantEditImageFile(null);
+    setFormState({
+      type: "restaurantUpdate",
+      status: "success",
+      message: "Restaurant details updated successfully.",
+    });
+    await loadDashboard(selectedRestaurantId);
+  }
+
+  async function handleToggleRestaurantAvailability() {
+    if (!selectedRestaurant) {
+      return;
+    }
+
+    setFormState({ type: "restaurantAvailability", status: "submitting" });
+
+    const { error } = await (supabase.from("restaurants") as any)
+      .update({ is_open: !selectedRestaurant.is_open })
+      .eq("id", selectedRestaurant.id);
+
+    if (error) {
+      setFormState({
+        type: "restaurantAvailability",
+        status: "error",
+        message: error.message,
+      });
+      return;
+    }
+
+    setFormState({
+      type: "restaurantAvailability",
+      status: "success",
+      message: selectedRestaurant.is_open
+        ? "Restaurant marked as closed."
+        : "Restaurant marked as open.",
+    });
+    await loadDashboard(selectedRestaurantId);
+  }
+
+  function startEditingMenuItem(item: MenuItemRow) {
+    setEditingMenuItemId(item.id);
+    setMenuItemEditForm(createMenuItemFormFromRow(item));
+    setMenuItemEditImageFile(null);
+  }
+
+  function cancelEditingMenuItem() {
+    setEditingMenuItemId("");
+    setMenuItemEditForm(initialMenuItemForm);
+    setMenuItemEditImageFile(null);
+  }
+
+  async function handleUpdateMenuItem(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingMenuItemId || !editingMenuItem) {
+      return;
+    }
+
+    setFormState({ type: "menuItemUpdate", status: "submitting" });
+
+    let imagePath = editingMenuItem.image_path;
+
+    try {
+      if (menuItemEditImageFile) {
+        imagePath = await uploadFoodPlaceImage(menuItemEditImageFile, "menu-item");
+      }
+    } catch (error) {
+      setFormState({
+        type: "menuItemUpdate",
+        status: "error",
+        message:
+          error instanceof Error ? error.message : "Unable to upload the menu image right now.",
+      });
+      return;
+    }
+
+    const { error } = await (supabase.from("menu_items") as any)
+      .update({
+        name: menuItemEditForm.name,
+        description: menuItemEditForm.description || null,
+        price: Number(menuItemEditForm.price),
+        category_id: menuItemEditForm.categoryId || null,
+        image_path: imagePath,
+      })
+      .eq("id", editingMenuItemId);
+
+    if (error) {
+      setFormState({ type: "menuItemUpdate", status: "error", message: error.message });
+      return;
+    }
+
+    setFormState({
+      type: "menuItemUpdate",
+      status: "success",
+      message: "Menu item updated successfully.",
+    });
+    cancelEditingMenuItem();
+    await loadDashboard(selectedRestaurantId);
+  }
+
+  async function handleToggleMenuItemAvailability(item: MenuItemRow) {
+    setFormState({ type: "menuItemAvailability", status: "submitting" });
+
+    const { error } = await (supabase.from("menu_items") as any)
+      .update({ is_available: !item.is_available })
+      .eq("id", item.id);
+
+    if (error) {
+      setFormState({
+        type: "menuItemAvailability",
+        status: "error",
+        message: error.message,
+      });
+      return;
+    }
+
+    setFormState({
+      type: "menuItemAvailability",
+      status: "success",
+      message: item.is_available
+        ? `${item.name} marked as unavailable.`
+        : `${item.name} marked as available.`,
+    });
+    await loadDashboard(selectedRestaurantId);
+  }
+
+  async function handleDeleteMenuItem(item: MenuItemRow) {
+    if (!window.confirm(`Delete ${item.name}? This removes it from the menu.`)) {
+      return;
+    }
+
+    setFormState({ type: "menuItemDelete", status: "submitting" });
+
+    const { error } = await (supabase.from("menu_items") as any).delete().eq("id", item.id);
+
+    if (error) {
+      setFormState({
+        type: "menuItemDelete",
+        status: "error",
+        message: error.message,
+      });
+      return;
+    }
+
+    if (editingMenuItemId === item.id) {
+      cancelEditingMenuItem();
+    }
+
+    setFormState({
+      type: "menuItemDelete",
+      status: "success",
+      message: `${item.name} deleted from the menu.`,
     });
     await loadDashboard(selectedRestaurantId);
   }
@@ -445,12 +814,21 @@ export function FoodPlaceDashboardContent() {
   const incomingOrders = state.data?.incomingOrders ?? [];
   const selectedRestaurant =
     restaurants.find((restaurant) => restaurant.id === selectedRestaurantId) ?? null;
+  const selectedRestaurantImageUrl = getFoodMediaPublicUrl(selectedRestaurant?.image_path);
+  const editingMenuItem =
+    menuItems.find((item) => item.id === editingMenuItemId) ?? null;
+  const editingMenuItemImageUrl = getFoodMediaPublicUrl(editingMenuItem?.image_path);
+
+  useEffect(() => {
+    setRestaurantEditForm(createRestaurantFormFromRow(selectedRestaurant));
+    setRestaurantEditImageFile(null);
+  }, [selectedRestaurant]);
 
   return (
     <DashboardShell
       eyebrow="Food Place dashboard"
-      title="Manage your restaurant, menus, and order operations from the web."
-      description="This dashboard now creates real restaurant and menu data in Supabase, so your marketplace can be managed from the app instead of SQL."
+      title="Manage your restaurant, upload food photos, and keep orders moving."
+      description="Food place owners can set up their storefront, upload menu images, and manage live order flow from one Dalbo page."
       stats={[
         {
           label: "Restaurants",
@@ -467,16 +845,16 @@ export function FoodPlaceDashboardContent() {
       ]}
       actions={[
         {
-          title: "Create your restaurant",
-          description: "Food place users can now create their own restaurant record directly from the dashboard.",
+          title: "Set up the storefront",
+          description: "Add the restaurant details customers see first, including a cover image for the food place.",
         },
         {
-          title: "Add categories and menu items",
-          description: "Once a restaurant exists, this page can seed the category and item catalog for customers to browse.",
+          title: "Upload menu photos",
+          description: "Add menu items with images so the customer marketplace feels more like a real ordering app.",
         },
         {
-          title: "Incoming orders board",
-          description: "Placed customer orders now appear below, and staff can push them through the prep flow.",
+          title: "Run the kitchen flow",
+          description: "Incoming orders stay on the same page so staff can move each order from placed to ready.",
         },
       ]}
     >
@@ -606,8 +984,8 @@ export function FoodPlaceDashboardContent() {
           <div>
             <h2 className="text-2xl font-semibold">Restaurant setup</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              Create a restaurant record tied to the signed-in food place owner. The owner can
-              then manage categories and menu items for that restaurant.
+              Create the storefront tied to this food place login, including the main photo that
+              customers will see while browsing all restaurants.
             </p>
           </div>
 
@@ -661,6 +1039,19 @@ export function FoodPlaceDashboardContent() {
               />
             </label>
 
+            <label className="block md:col-span-2">
+              <span className="mb-2 block text-sm font-medium text-slate-700">Restaurant cover photo</span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={(event) => setRestaurantImageFile(event.target.files?.[0] ?? null)}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-semibold file:text-orange-700 focus:border-orange-400"
+              />
+              <p className="mt-2 text-xs text-slate-500">
+                Upload JPG, PNG, or WebP up to 5 MB.
+              </p>
+            </label>
+
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">Latitude</span>
               <input
@@ -686,6 +1077,16 @@ export function FoodPlaceDashboardContent() {
             </label>
 
             <div className="md:col-span-2 flex flex-col gap-3">
+              {restaurantImagePreviewUrl ? (
+                <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+                  <img
+                    src={restaurantImagePreviewUrl}
+                    alt="Restaurant cover preview"
+                    className="h-56 w-full object-cover"
+                  />
+                </div>
+              ) : null}
+
               {formState.type === "restaurant" && formState.message ? (
                 <p
                   className={`rounded-2xl px-4 py-3 text-sm ${
@@ -748,10 +1149,196 @@ export function FoodPlaceDashboardContent() {
               </label>
 
               {selectedRestaurant ? (
-                <div className="rounded-2xl bg-slate-50 p-4 text-sm text-slate-600">
-                  <p className="font-semibold text-slate-900">{selectedRestaurant.name}</p>
-                  <p className="mt-2">{selectedRestaurant.description || "No description yet."}</p>
-                  <p className="mt-2">{selectedRestaurant.address_text || "No address yet."}</p>
+                <div className="space-y-6">
+                  <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+                    {selectedRestaurantImageUrl ? (
+                      <img
+                        src={selectedRestaurantImageUrl}
+                        alt={selectedRestaurant.name}
+                        className="h-52 w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-52 items-center justify-center bg-[#fff7f1] text-sm font-semibold text-orange-600">
+                        Upload a restaurant cover photo
+                      </div>
+                    )}
+                    <div className="space-y-4 p-5 text-sm text-slate-600">
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <p className="text-lg font-semibold text-slate-900">{selectedRestaurant.name}</p>
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              selectedRestaurant.is_open
+                                ? "bg-green-100 text-green-700"
+                                : "bg-slate-100 text-slate-500"
+                            }`}
+                          >
+                            {selectedRestaurant.is_open ? "Open" : "Closed"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleToggleRestaurantAvailability}
+                          disabled={
+                            formState.type === "restaurantAvailability" &&
+                            formState.status === "submitting"
+                          }
+                          className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60"
+                        >
+                          {formState.type === "restaurantAvailability" &&
+                          formState.status === "submitting"
+                            ? "Saving..."
+                            : selectedRestaurant.is_open
+                              ? "Mark closed"
+                              : "Mark open"}
+                        </button>
+                      </div>
+                      <p>{selectedRestaurant.description || "No description yet."}</p>
+                      <p>{selectedRestaurant.address_text || "No address yet."}</p>
+                    </div>
+                  </div>
+
+                  <form
+                    className="grid gap-4 rounded-3xl border border-slate-200 bg-white p-5 md:grid-cols-2"
+                    onSubmit={handleUpdateRestaurant}
+                  >
+                    <div className="md:col-span-2">
+                      <h3 className="text-lg font-semibold text-slate-900">Edit restaurant details</h3>
+                      <p className="mt-2 text-sm text-slate-600">
+                        Update the restaurant profile, cover photo, and storefront details customers
+                        use while browsing.
+                      </p>
+                    </div>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">Restaurant name</span>
+                      <input
+                        value={restaurantEditForm.name}
+                        onChange={(event) =>
+                          setRestaurantEditForm((current) => ({ ...current, name: event.target.value }))
+                        }
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                        required
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">Phone</span>
+                      <input
+                        value={restaurantEditForm.phone}
+                        onChange={(event) =>
+                          setRestaurantEditForm((current) => ({ ...current, phone: event.target.value }))
+                        }
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                      />
+                    </label>
+
+                    <label className="block md:col-span-2">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">Description</span>
+                      <textarea
+                        value={restaurantEditForm.description}
+                        onChange={(event) =>
+                          setRestaurantEditForm((current) => ({
+                            ...current,
+                            description: event.target.value,
+                          }))
+                        }
+                        className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                      />
+                    </label>
+
+                    <label className="block md:col-span-2">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">Address</span>
+                      <input
+                        value={restaurantEditForm.addressText}
+                        onChange={(event) =>
+                          setRestaurantEditForm((current) => ({
+                            ...current,
+                            addressText: event.target.value,
+                          }))
+                        }
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">Latitude</span>
+                      <input
+                        value={restaurantEditForm.latitude}
+                        onChange={(event) =>
+                          setRestaurantEditForm((current) => ({ ...current, latitude: event.target.value }))
+                        }
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">Longitude</span>
+                      <input
+                        value={restaurantEditForm.longitude}
+                        onChange={(event) =>
+                          setRestaurantEditForm((current) => ({ ...current, longitude: event.target.value }))
+                        }
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                      />
+                    </label>
+
+                    <label className="block md:col-span-2">
+                      <span className="mb-2 block text-sm font-medium text-slate-700">New cover photo</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={(event) => setRestaurantEditImageFile(event.target.files?.[0] ?? null)}
+                        className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-semibold file:text-orange-700 focus:border-orange-400"
+                      />
+                    </label>
+
+                    {(restaurantEditImagePreviewUrl || selectedRestaurantImageUrl) && (
+                      <div className="md:col-span-2 overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+                        <img
+                          src={restaurantEditImagePreviewUrl || selectedRestaurantImageUrl || ""}
+                          alt="Restaurant edit preview"
+                          className="h-56 w-full object-cover"
+                        />
+                      </div>
+                    )}
+
+                    {formState.type === "restaurantUpdate" && formState.message ? (
+                      <p
+                        className={`md:col-span-2 rounded-2xl px-4 py-3 text-sm ${
+                          formState.status === "error"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-green-50 text-green-700"
+                        }`}
+                      >
+                        {formState.message}
+                      </p>
+                    ) : null}
+
+                    {formState.type === "restaurantAvailability" && formState.message ? (
+                      <p
+                        className={`md:col-span-2 rounded-2xl px-4 py-3 text-sm ${
+                          formState.status === "error"
+                            ? "bg-red-50 text-red-700"
+                            : "bg-green-50 text-green-700"
+                        }`}
+                      >
+                        {formState.message}
+                      </p>
+                    ) : null}
+
+                    <div className="md:col-span-2">
+                      <button
+                        type="submit"
+                        disabled={formState.type === "restaurantUpdate" && formState.status === "submitting"}
+                        className="rounded-2xl bg-[#0b1020] px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-900 disabled:opacity-60"
+                      >
+                        {formState.type === "restaurantUpdate" && formState.status === "submitting"
+                          ? "Saving changes..."
+                          : "Save restaurant changes"}
+                      </button>
+                    </div>
+                  </form>
                 </div>
               ) : null}
 
@@ -816,7 +1403,8 @@ export function FoodPlaceDashboardContent() {
                   <div>
                     <h3 className="text-lg font-semibold">Add menu item</h3>
                     <p className="mt-2 text-sm text-slate-600">
-                      Menu items will appear on the customer dashboard once menu browsing is connected.
+                      Menu items appear in the customer marketplace, so add a strong name, clear
+                      description, and a photo when possible.
                     </p>
                   </div>
 
@@ -890,6 +1478,29 @@ export function FoodPlaceDashboardContent() {
                     </label>
                   </div>
 
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-700">Food photo</span>
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      onChange={(event) => setMenuItemImageFile(event.target.files?.[0] ?? null)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-semibold file:text-orange-700 focus:border-orange-400"
+                    />
+                    <p className="mt-2 text-xs text-slate-500">
+                      Optional, but recommended for the customer menu.
+                    </p>
+                  </label>
+
+                  {menuItemImagePreviewUrl ? (
+                    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-50">
+                      <img
+                        src={menuItemImagePreviewUrl}
+                        alt="Menu item preview"
+                        className="h-56 w-full object-cover"
+                      />
+                    </div>
+                  ) : null}
+
                   {formState.type === "menuItem" && formState.message ? (
                     <p
                       className={`rounded-2xl px-4 py-3 text-sm ${
@@ -935,12 +1546,35 @@ export function FoodPlaceDashboardContent() {
 
                 <div className="rounded-3xl border border-slate-200 p-5">
                   <h3 className="text-lg font-semibold">Menu items</h3>
+                  {["menuItemAvailability", "menuItemDelete"].includes(formState.type ?? "") &&
+                  formState.message ? (
+                    <p
+                      className={`mt-4 rounded-2xl px-4 py-3 text-sm ${
+                        formState.status === "error"
+                          ? "bg-red-50 text-red-700"
+                          : "bg-green-50 text-green-700"
+                      }`}
+                    >
+                      {formState.message}
+                    </p>
+                  ) : null}
                   <div className="mt-4 space-y-3">
                     {menuItems.length === 0 ? (
                       <p className="text-sm text-slate-600">No menu items yet.</p>
                     ) : (
                       menuItems.map((item) => (
                         <div key={item.id} className="rounded-2xl bg-slate-50 p-4">
+                          {item.image_path ? (
+                            <img
+                              src={getFoodMediaPublicUrl(item.image_path) ?? ""}
+                              alt={item.name}
+                              className="mb-4 h-40 w-full rounded-2xl object-cover"
+                            />
+                          ) : (
+                            <div className="mb-4 flex h-40 items-center justify-center rounded-2xl bg-white text-sm font-semibold text-slate-400">
+                              No food image yet
+                            </div>
+                          )}
                           <div className="flex items-center justify-between gap-3">
                             <p className="font-semibold">{item.name}</p>
                             <span
@@ -959,6 +1593,170 @@ export function FoodPlaceDashboardContent() {
                           <p className="mt-2 text-sm font-semibold text-slate-900">
                             ${Number(item.price).toFixed(2)}
                           </p>
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => startEditingMenuItem(item)}
+                              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white"
+                            >
+                              Edit item
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleMenuItemAvailability(item)}
+                              disabled={
+                                formState.type === "menuItemAvailability" &&
+                                formState.status === "submitting"
+                              }
+                              className="rounded-2xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white disabled:opacity-60"
+                            >
+                              {item.is_available ? "Mark unavailable" : "Mark available"}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteMenuItem(item)}
+                              disabled={
+                                formState.type === "menuItemDelete" &&
+                                formState.status === "submitting"
+                              }
+                              className="rounded-2xl border border-red-200 px-4 py-2 text-sm font-semibold text-red-600 transition hover:bg-red-50 disabled:opacity-60"
+                            >
+                              Delete item
+                            </button>
+                          </div>
+
+                          {editingMenuItemId === item.id ? (
+                            <form className="mt-5 space-y-4 rounded-2xl border border-slate-200 bg-white p-4" onSubmit={handleUpdateMenuItem}>
+                              <div>
+                                <h4 className="font-semibold text-slate-900">Edit menu item</h4>
+                                <p className="mt-1 text-sm text-slate-600">
+                                  Update the name, price, description, category, and food photo.
+                                </p>
+                              </div>
+
+                              <label className="block">
+                                <span className="mb-2 block text-sm font-medium text-slate-700">Item name</span>
+                                <input
+                                  value={menuItemEditForm.name}
+                                  onChange={(event) =>
+                                    setMenuItemEditForm((current) => ({ ...current, name: event.target.value }))
+                                  }
+                                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                                  required
+                                />
+                              </label>
+
+                              <label className="block">
+                                <span className="mb-2 block text-sm font-medium text-slate-700">Description</span>
+                                <textarea
+                                  value={menuItemEditForm.description}
+                                  onChange={(event) =>
+                                    setMenuItemEditForm((current) => ({
+                                      ...current,
+                                      description: event.target.value,
+                                    }))
+                                  }
+                                  className="min-h-24 w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                                />
+                              </label>
+
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <label className="block">
+                                  <span className="mb-2 block text-sm font-medium text-slate-700">Price</span>
+                                  <input
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={menuItemEditForm.price}
+                                    onChange={(event) =>
+                                      setMenuItemEditForm((current) => ({
+                                        ...current,
+                                        price: event.target.value,
+                                      }))
+                                    }
+                                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                                    required
+                                  />
+                                </label>
+
+                                <label className="block">
+                                  <span className="mb-2 block text-sm font-medium text-slate-700">Category</span>
+                                  <select
+                                    value={menuItemEditForm.categoryId}
+                                    onChange={(event) =>
+                                      setMenuItemEditForm((current) => ({
+                                        ...current,
+                                        categoryId: event.target.value,
+                                      }))
+                                    }
+                                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                                  >
+                                    <option value="">No category</option>
+                                    {categories.map((category) => (
+                                      <option key={category.id} value={category.id}>
+                                        {category.name}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </label>
+                              </div>
+
+                              <label className="block">
+                                <span className="mb-2 block text-sm font-medium text-slate-700">Replace food photo</span>
+                                <input
+                                  type="file"
+                                  accept="image/png,image/jpeg,image/webp"
+                                  onChange={(event) => setMenuItemEditImageFile(event.target.files?.[0] ?? null)}
+                                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition file:mr-4 file:rounded-full file:border-0 file:bg-orange-100 file:px-4 file:py-2 file:font-semibold file:text-orange-700 focus:border-orange-400"
+                                />
+                              </label>
+
+                              {(menuItemEditImagePreviewUrl || editingMenuItemImageUrl) && (
+                                <div className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                                  <img
+                                    src={menuItemEditImagePreviewUrl || editingMenuItemImageUrl || ""}
+                                    alt="Menu item edit preview"
+                                    className="h-48 w-full object-cover"
+                                  />
+                                </div>
+                              )}
+
+                              {formState.type === "menuItemUpdate" && formState.message ? (
+                                <p
+                                  className={`rounded-2xl px-4 py-3 text-sm ${
+                                    formState.status === "error"
+                                      ? "bg-red-50 text-red-700"
+                                      : "bg-green-50 text-green-700"
+                                  }`}
+                                >
+                                  {formState.message}
+                                </p>
+                              ) : null}
+
+                              <div className="flex flex-wrap gap-3">
+                                <button
+                                  type="submit"
+                                  disabled={
+                                    formState.type === "menuItemUpdate" &&
+                                    formState.status === "submitting"
+                                  }
+                                  className="rounded-2xl bg-[#ff6200] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#e35700] disabled:opacity-60"
+                                >
+                                  {formState.type === "menuItemUpdate" &&
+                                  formState.status === "submitting"
+                                    ? "Saving changes..."
+                                    : "Save item changes"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEditingMenuItem}
+                                  className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </form>
+                          ) : null}
                         </div>
                       ))
                     )}
