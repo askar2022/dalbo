@@ -473,6 +473,11 @@ export function CustomerDashboardContent() {
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const cartSubtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const checkoutPricing = calculateOrderPricing(cartSubtotal);
+  const selectedAddress =
+    addresses.find((address) => address.id === selectedAddressId) ?? addresses[0] ?? null;
+  const selectedRestaurantMenuCount = menuState.menuItems.length;
+  const selectedRestaurantAvailableCount = menuState.menuItems.filter((item) => item.is_available).length;
+  const completedOrderCount = recentOrders.filter((order) => order.payment_status === "paid").length;
 
   function handleSelectRestaurant(restaurantId: string) {
     setSelectedRestaurantId(restaurantId);
@@ -579,16 +584,16 @@ export function CustomerDashboardContent() {
   return (
     <DashboardShell
       eyebrow="Customer dashboard"
-      title="Order food, track deliveries, and manage saved addresses."
-      description="This dashboard now reads from Supabase so customers can choose a restaurant, browse menu items, and pay through Stripe checkout."
+      title="Pick a food place, build your cart, and check out faster."
+      description="Browse live restaurants, jump into the menu you want, and place a real Dalbo order with Stripe-backed checkout."
       stats={[
         {
-          label: "Food places",
-          value: state.status === "loading" ? "..." : String(restaurants.length),
+          label: "Open places",
+          value: state.status === "loading" ? "..." : String(openRestaurants),
         },
         {
-          label: "Active orders",
-          value: state.status === "loading" ? "..." : String(state.data?.activeOrders ?? 0),
+          label: "Saved addresses",
+          value: state.status === "loading" ? "..." : String(state.data?.savedAddresses ?? 0),
         },
         {
           label: "Cart items",
@@ -597,25 +602,25 @@ export function CustomerDashboardContent() {
       ]}
       actions={[
         {
-          title: "Pick a restaurant",
-          description: "The selected restaurant now controls which categories and menu items are shown below.",
+          title: "Choose a restaurant card",
+          description: "Tap any food place below to refresh the featured menu and start building an order.",
         },
         {
-          title: "Build the cart",
-          description: "Customers can now add menu items locally and start a real Stripe-backed checkout.",
+          title: "Use category chips",
+          description: "Filter quickly between menu sections and add items without leaving the page.",
         },
         {
-          title: "Track recent orders",
-          description: "Placed orders now appear below so customers can confirm that checkout worked.",
+          title: "Review and pay",
+          description: "Your cart stays visible beside the menu so checkout feels more like a real ordering app.",
         },
       ]}
     >
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div className="space-y-2">
-          <h2 className="text-2xl font-semibold">Marketplace and menu browser</h2>
+          <h2 className="text-2xl font-semibold">Marketplace</h2>
           <p className="text-sm leading-6 text-slate-600">
-            This section is connected to `public.restaurants`, `public.menu_categories`, and
-            `public.menu_items`, so customers can move from browsing restaurants into a real menu.
+            Browse live food places, open a menu, and keep your cart moving from selection to
+            checkout in one flow.
           </p>
         </div>
 
@@ -633,21 +638,60 @@ export function CustomerDashboardContent() {
 
         {state.status === "ready" ? (
           <>
-            <div className="grid gap-4 md:grid-cols-2">
-              <article className="rounded-2xl bg-orange-50 p-4">
-                <h3 className="font-semibold">Open right now</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {openRestaurants} of {restaurants.length} food places are currently marked open.
-                </p>
-              </article>
-              <article className="rounded-2xl bg-slate-50 p-4">
-                <h3 className="font-semibold">Saved addresses</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  You already have {state.data?.savedAddresses ?? 0} saved address entries linked
-                  to this customer profile.
-                </p>
-              </article>
-            </div>
+            <section className="overflow-hidden rounded-[32px] bg-[#0b1020] text-white">
+              <div className="grid gap-8 px-6 py-7 lg:grid-cols-[1.1fr_0.9fr] lg:px-8">
+                <div className="space-y-4">
+                  <span className="inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-semibold text-orange-200">
+                    Browse all food places
+                  </span>
+                  <div className="space-y-3">
+                    <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                      {selectedRestaurant
+                        ? `Selected restaurant: ${selectedRestaurant.name}`
+                        : "Choose from all restaurants"}
+                    </h3>
+                    <p className="max-w-2xl text-sm leading-7 text-slate-300 sm:text-base">
+                      {selectedRestaurant?.description ||
+                        "Browse restaurants, compare menus, and head to checkout without leaving the customer dashboard."}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-sm">
+                    <span className="rounded-full bg-white/10 px-4 py-2 text-slate-100">
+                      {openRestaurants} open now
+                    </span>
+                    <span className="rounded-full bg-white/10 px-4 py-2 text-slate-100">
+                      {state.data?.savedAddresses ?? 0} saved addresses
+                    </span>
+                    <span className="rounded-full bg-white/10 px-4 py-2 text-slate-100">
+                      {recentOrders.length} recent orders
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <article className="rounded-3xl bg-white/10 p-5 backdrop-blur">
+                    <p className="text-sm font-semibold text-orange-200">Delivery spot</p>
+                    <p className="mt-3 text-lg font-semibold text-white">
+                      {selectedAddress?.label || "Choose address"}
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-200">
+                      {selectedAddress?.address_text ||
+                        "Select a saved delivery address before checking out."}
+                    </p>
+                  </article>
+                  <article className="rounded-3xl bg-white/10 p-5 backdrop-blur">
+                    <p className="text-sm font-semibold text-orange-200">Ready to browse</p>
+                    <p className="mt-3 text-lg font-semibold text-white">
+                      {selectedRestaurant ? selectedRestaurantMenuCount : 0} menu items
+                    </p>
+                    <p className="mt-2 text-sm leading-6 text-slate-200">
+                      {selectedRestaurantAvailableCount} available right now from the selected food
+                      place.
+                    </p>
+                  </article>
+                </div>
+              </div>
+            </section>
 
             {restaurants.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-5">
@@ -659,73 +703,165 @@ export function CustomerDashboardContent() {
               </div>
             ) : (
               <div className="space-y-6">
-                <div className="grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-                  <div className="space-y-4">
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5">
-                      <label className="block">
-                        <span className="mb-2 block text-sm font-medium text-slate-700">
-                          Select restaurant
-                        </span>
-                        <select
-                          value={selectedRestaurantId}
-                          onChange={(event) => handleSelectRestaurant(event.target.value)}
-                          className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
-                        >
-                          {restaurants.map((restaurant) => (
-                            <option key={restaurant.id} value={restaurant.id}>
-                              {restaurant.name}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                <section className="space-y-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-xl font-semibold">Choose a food place</h3>
+                      <p className="mt-1 text-sm text-slate-600">
+                        Pick from the restaurants below to refresh the featured menu.
+                      </p>
+                    </div>
+                    <p className="text-sm font-medium text-slate-500">{restaurants.length} available</p>
+                  </div>
 
-                      {selectedRestaurant ? (
-                        <div className="mt-5 space-y-3 rounded-2xl bg-slate-50 p-4">
-                          <div className="flex items-center gap-3">
-                            <h3 className="text-lg font-semibold">{selectedRestaurant.name}</h3>
+                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                    {restaurants.map((restaurant) => {
+                      const isSelected = restaurant.id === selectedRestaurantId;
+
+                      return (
+                        <button
+                          key={restaurant.id}
+                          type="button"
+                          onClick={() => handleSelectRestaurant(restaurant.id)}
+                          className={`rounded-[28px] border p-5 text-left transition ${
+                            isSelected
+                              ? "border-orange-300 bg-orange-50 shadow-sm"
+                              : "border-slate-200 bg-white hover:border-orange-200 hover:bg-[#fffaf5]"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-lg font-semibold text-slate-900">{restaurant.name}</p>
+                              <p className="mt-2 text-sm leading-6 text-slate-600">
+                                {restaurant.description ||
+                                  "Add a restaurant description in Supabase to show cuisine, style, or offers."}
+                              </p>
+                            </div>
                             <span
                               className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                selectedRestaurant.is_open
+                                restaurant.is_open
                                   ? "bg-green-100 text-green-700"
                                   : "bg-slate-100 text-slate-500"
                               }`}
                             >
-                              {selectedRestaurant.is_open ? "Open" : "Closed"}
+                              {restaurant.is_open ? "Open now" : "Closed"}
                             </span>
                           </div>
-                          <p className="text-sm leading-6 text-slate-600">
-                            {selectedRestaurant.description ||
-                              "Add a restaurant description in Supabase to show cuisine, style, or special offers."}
-                          </p>
-                          <p className="text-sm text-slate-600">
-                            {selectedRestaurant.address_text || "Address not added yet"}
-                          </p>
+                          <div className="mt-4 flex items-center justify-between gap-3 text-sm text-slate-500">
+                            <span>{restaurant.address_text || "Address coming soon"}</span>
+                            <span className="font-semibold text-orange-600">
+                              {isSelected ? "Selected" : "View menu"}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <div className="grid gap-6 xl:grid-cols-[1.1fr_0.9fr]">
+                  <div className="space-y-6">
+                    <section className="rounded-[32px] border border-slate-200 bg-white p-6">
+                      {selectedRestaurant ? (
+                        <div className="space-y-6">
+                          <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                            <div className="space-y-3">
+                              <div className="flex flex-wrap items-center gap-3">
+                                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                                  Selected restaurant
+                                </span>
+                                <span
+                                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                    selectedRestaurant.is_open
+                                      ? "bg-green-100 text-green-700"
+                                      : "bg-slate-100 text-slate-500"
+                                  }`}
+                                >
+                                  {selectedRestaurant.is_open ? "Taking orders" : "Currently closed"}
+                                </span>
+                              </div>
+                              <div>
+                                <h3 className="text-3xl font-semibold tracking-tight">
+                                  {selectedRestaurant.name}
+                                </h3>
+                                <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">
+                                  {selectedRestaurant.description ||
+                                    "This restaurant is ready to appear here once a richer description is added in Supabase."}
+                                </p>
+                              </div>
+                              <p className="text-sm text-slate-500">
+                                {selectedRestaurant.address_text || "Address not added yet"}
+                              </p>
+                            </div>
+
+                            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[320px] lg:grid-cols-1">
+                              <div className="rounded-2xl bg-slate-50 px-4 py-4">
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                  Available items
+                                </p>
+                                <p className="mt-2 text-2xl font-bold text-slate-900">
+                                  {selectedRestaurantAvailableCount}
+                                </p>
+                              </div>
+                              <div className="rounded-2xl bg-slate-50 px-4 py-4">
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                  Categories
+                                </p>
+                                <p className="mt-2 text-2xl font-bold text-slate-900">
+                                  {menuState.categories.length}
+                                </p>
+                              </div>
+                              <div className="rounded-2xl bg-slate-50 px-4 py-4">
+                                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                  In your cart
+                                </p>
+                                <p className="mt-2 text-2xl font-bold text-slate-900">{cartCount}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setSelectedCategoryId("all")}
+                              className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                                selectedCategoryId === "all"
+                                  ? "bg-[#ff6200] text-white"
+                                  : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                              }`}
+                            >
+                              All menu
+                            </button>
+                            {menuState.categories.map((category) => (
+                              <button
+                                key={category.id}
+                                type="button"
+                                onClick={() => setSelectedCategoryId(category.id)}
+                                className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+                                  selectedCategoryId === category.id
+                                    ? "bg-[#ff6200] text-white"
+                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                }`}
+                              >
+                                {category.name}
+                              </button>
+                            ))}
+                          </div>
                         </div>
                       ) : null}
-                    </div>
+                    </section>
 
-                    <div className="rounded-3xl border border-slate-200 bg-white p-5">
-                      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <section className="rounded-[32px] border border-slate-200 bg-white p-6">
+                      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                         <div>
-                          <h3 className="text-lg font-semibold">Menu</h3>
-                          <p className="mt-2 text-sm text-slate-600">
-                            Browse available categories and add items to the cart.
+                          <h3 className="text-xl font-semibold">Menu</h3>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Add available dishes to your cart and keep building the order.
                           </p>
                         </div>
-
-                        <select
-                          value={selectedCategoryId}
-                          onChange={(event) => setSelectedCategoryId(event.target.value)}
-                          className="rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-orange-400"
-                          disabled={menuState.status !== "ready"}
-                        >
-                          <option value="all">All categories</option>
-                          {menuState.categories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                              {category.name}
-                            </option>
-                          ))}
-                        </select>
+                        <p className="text-sm font-medium text-slate-500">
+                          {filteredMenuItems.length} items shown
+                        </p>
                       </div>
 
                       {menuState.status === "loading" ? (
@@ -747,54 +883,145 @@ export function CustomerDashboardContent() {
                       ) : null}
 
                       {menuState.status === "ready" && filteredMenuItems.length > 0 ? (
-                        <div className="mt-5 grid gap-4">
-                          {filteredMenuItems.map((item) => (
-                            <article
-                              key={item.id}
-                              className="rounded-2xl border border-slate-200 bg-slate-50 p-4"
-                            >
-                              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-3">
-                                    <h4 className="font-semibold">{item.name}</h4>
-                                    <span
-                                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                        item.is_available
-                                          ? "bg-green-100 text-green-700"
-                                          : "bg-slate-200 text-slate-600"
-                                      }`}
-                                    >
-                                      {item.is_available ? "Available" : "Unavailable"}
-                                    </span>
+                        <div className="mt-6 grid gap-4 md:grid-cols-2">
+                          {filteredMenuItems.map((item) => {
+                            const itemQuantityInCart =
+                              cartItems.find((cartItem) => cartItem.id === item.id)?.quantity ?? 0;
+
+                            return (
+                              <article
+                                key={item.id}
+                                className="rounded-[28px] border border-slate-200 bg-[#fffaf5] p-5"
+                              >
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="space-y-3">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                      <h4 className="text-lg font-semibold text-slate-900">{item.name}</h4>
+                                      <span
+                                        className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                          item.is_available
+                                            ? "bg-green-100 text-green-700"
+                                            : "bg-slate-200 text-slate-600"
+                                        }`}
+                                      >
+                                        {item.is_available ? "Available" : "Unavailable"}
+                                      </span>
+                                    </div>
+                                    <p className="text-sm leading-6 text-slate-600">
+                                      {item.description || "No description yet."}
+                                    </p>
                                   </div>
-                                  <p className="text-sm leading-6 text-slate-600">
-                                    {item.description || "No description yet."}
-                                  </p>
-                                  <p className="text-sm font-semibold text-slate-900">
-                                    {formatCurrency(Number(item.price))}
-                                  </p>
+                                  {itemQuantityInCart > 0 ? (
+                                    <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                                      {itemQuantityInCart} in cart
+                                    </span>
+                                  ) : null}
                                 </div>
 
-                                <button
-                                  type="button"
-                                  onClick={() => handleAddToCart(item)}
-                                  disabled={!item.is_available || !selectedRestaurant?.is_open}
-                                  className="rounded-2xl bg-[#ff6200] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#e35700] disabled:cursor-not-allowed disabled:opacity-50"
-                                >
-                                  Add to cart
-                                </button>
+                                <div className="mt-5 flex items-center justify-between gap-4">
+                                  <div>
+                                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+                                      Price
+                                    </p>
+                                    <p className="mt-1 text-lg font-semibold text-slate-900">
+                                      {formatCurrency(Number(item.price))}
+                                    </p>
+                                  </div>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleAddToCart(item)}
+                                    disabled={!item.is_available || !selectedRestaurant?.is_open}
+                                    className="rounded-2xl bg-[#ff6200] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#e35700] disabled:cursor-not-allowed disabled:opacity-50"
+                                  >
+                                    Add to cart
+                                  </button>
+                                </div>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      ) : null}
+                    </section>
+
+                    <section className="rounded-[32px] border border-slate-200 bg-white p-6">
+                      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                        <div>
+                          <h3 className="text-xl font-semibold">Recent orders</h3>
+                          <p className="mt-1 text-sm text-slate-600">
+                            Orders placed from this dashboard appear here after checkout.
+                          </p>
+                        </div>
+                        <p className="text-sm font-medium text-slate-500">
+                          {recentOrders.length} recent orders
+                        </p>
+                      </div>
+
+                      {recentOrders.length === 0 ? (
+                        <div className="mt-5 rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
+                          No orders yet.
+                        </div>
+                      ) : (
+                        <div className="mt-5 grid gap-4">
+                          {recentOrders.map((order) => (
+                            <article key={order.id} className="rounded-2xl bg-slate-50 p-4">
+                              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                                <div>
+                                  <div className="flex flex-wrap items-center gap-3">
+                                    <p className="font-semibold">{order.restaurant_name}</p>
+                                    <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
+                                      {formatStatus(order.status)}
+                                    </span>
+                                    <span
+                                      className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                                        order.payment_status === "paid"
+                                          ? "bg-green-100 text-green-700"
+                                          : order.payment_status === "pending"
+                                            ? "bg-amber-100 text-amber-700"
+                                            : "bg-slate-200 text-slate-600"
+                                      }`}
+                                    >
+                                      {formatPaymentStatus(order.payment_status)}
+                                    </span>
+                                  </div>
+                                  <p className="mt-2 text-sm text-slate-600">
+                                    Placed {formatDateTime(order.placed_at)}
+                                  </p>
+                                </div>
+                                <p className="text-sm font-semibold text-slate-900">
+                                  {formatCurrency(order.total)}
+                                </p>
+                              </div>
+                              <p className="mt-3 text-sm text-slate-600">
+                                Items {formatCurrency(order.subtotal)} + service{" "}
+                                {formatCurrency(order.service_fee)} + delivery{" "}
+                                {formatCurrency(order.delivery_fee)}
+                              </p>
+
+                              <div className="mt-4 grid gap-2">
+                                {order.items.map((item) => (
+                                  <div
+                                    key={`${order.id}-${item.item_name}`}
+                                    className="flex items-center justify-between gap-3 text-sm text-slate-600"
+                                  >
+                                    <span>
+                                      {item.quantity} x {item.item_name}
+                                    </span>
+                                    <span>{formatCurrency(Number(item.line_total))}</span>
+                                  </div>
+                                ))}
                               </div>
                             </article>
                           ))}
                         </div>
-                      ) : null}
-                    </div>
+                      )}
+                    </section>
                   </div>
 
-                  <aside className="rounded-3xl border border-slate-200 bg-white p-5">
+                  <aside className="rounded-[32px] border border-slate-200 bg-white p-5 xl:sticky xl:top-6">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <h3 className="text-lg font-semibold">Cart</h3>
+                        <h3 className="text-lg font-semibold">Your cart</h3>
                         <p className="mt-2 text-sm text-slate-600">
                           {cartRestaurantId && selectedRestaurant
                             ? `Ordering from ${selectedRestaurant.name}`
@@ -873,9 +1100,9 @@ export function CustomerDashboardContent() {
                               {formatCurrency(checkoutPricing.total)}
                             </span>
                           </div>
-                          <p className="mt-3 text-sm text-slate-300">
-                            Restaurant commission is tracked separately for payouts. Payment now
-                            opens a Stripe checkout and only paid orders move into dispatch.
+                          <p className="mt-3 text-sm leading-6 text-slate-300">
+                            Card payment opens Stripe checkout. Only paid orders move into the live
+                            order flow for the restaurant.
                           </p>
                         </div>
 
@@ -926,87 +1153,23 @@ export function CustomerDashboardContent() {
                           <button
                             type="button"
                             onClick={handleCheckout}
-                            disabled={checkoutState.status === "submitting"}
+                            disabled={
+                              checkoutState.status === "submitting" ||
+                              !selectedRestaurant?.is_open ||
+                              cartItems.length === 0
+                            }
                             className="mt-4 w-full rounded-2xl bg-[#ff6200] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#e35700] disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {checkoutState.status === "submitting"
                               ? "Opening checkout..."
-                              : "Pay with card"}
+                              : selectedRestaurant?.is_open
+                                ? "Pay with card"
+                                : "Restaurant is closed"}
                           </button>
                         </div>
                       </div>
                     )}
                   </aside>
-                </div>
-
-                <div className="rounded-3xl border border-slate-200 bg-white p-5">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <h3 className="text-lg font-semibold">Recent orders</h3>
-                      <p className="mt-1 text-sm text-slate-600">
-                        Orders placed from this dashboard appear here immediately after checkout.
-                      </p>
-                    </div>
-                  </div>
-
-                  {recentOrders.length === 0 ? (
-                    <div className="mt-5 rounded-2xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-                      No orders yet.
-                    </div>
-                  ) : (
-                    <div className="mt-5 grid gap-4">
-                      {recentOrders.map((order) => (
-                        <article key={order.id} className="rounded-2xl bg-slate-50 p-4">
-                          <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                            <div>
-                              <div className="flex items-center gap-3">
-                                <p className="font-semibold">{order.restaurant_name}</p>
-                                <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
-                                  {formatStatus(order.status)}
-                                </span>
-                                <span
-                                  className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                                    order.payment_status === "paid"
-                                      ? "bg-green-100 text-green-700"
-                                      : order.payment_status === "pending"
-                                        ? "bg-amber-100 text-amber-700"
-                                        : "bg-slate-200 text-slate-600"
-                                  }`}
-                                >
-                                  {formatPaymentStatus(order.payment_status)}
-                                </span>
-                              </div>
-                              <p className="mt-2 text-sm text-slate-600">
-                                Placed {formatDateTime(order.placed_at)}
-                              </p>
-                            </div>
-                            <p className="text-sm font-semibold text-slate-900">
-                              {formatCurrency(order.total)}
-                            </p>
-                          </div>
-                          <p className="mt-3 text-sm text-slate-600">
-                            Items {formatCurrency(order.subtotal)} + service{" "}
-                            {formatCurrency(order.service_fee)} + delivery{" "}
-                            {formatCurrency(order.delivery_fee)}
-                          </p>
-
-                          <div className="mt-4 grid gap-2">
-                            {order.items.map((item) => (
-                              <div
-                                key={`${order.id}-${item.item_name}`}
-                                className="flex items-center justify-between gap-3 text-sm text-slate-600"
-                              >
-                                <span>
-                                  {item.quantity} x {item.item_name}
-                                </span>
-                                <span>{formatCurrency(Number(item.line_total))}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </article>
-                      ))}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
