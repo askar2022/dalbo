@@ -203,7 +203,7 @@ export default function HomePage() {
         <header className="flex flex-col gap-5 rounded-[36px] border border-orange-100 bg-white px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-center gap-3">
             <Image
-              src="/logo_dalbo.png"
+              src="/logo_dalbo.svg"
               alt="Dalbo logo"
               width={170}
               height={52}
@@ -288,12 +288,12 @@ export default function HomePage() {
                     <article
                       className="mx-auto flex h-full w-full max-w-[340px] flex-col rounded-[36px] border border-slate-200 bg-[#fff7f1] p-5 transition duration-200 hover:-translate-y-1 xl:min-h-[640px]"
                     >
-                      <div className="flex h-[360px] items-start justify-center">
+                      <div className="flex min-h-[390px] items-start justify-center pb-4">
                         <div className="mx-auto w-full max-w-[240px]">
                         <JourneyPhone view={step.view} />
                         </div>
                       </div>
-                      <div className="flex flex-1 flex-col px-2 pb-3 pt-8 sm:px-3">
+                      <div className="flex flex-1 flex-col px-2 pb-3 pt-10 sm:px-3">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
                             {step.step}
