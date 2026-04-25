@@ -32,6 +32,8 @@ type AuthFormProps = {
   infoItems: string[];
   homeHref?: string;
   homeLabel?: string;
+  homePrompt?: string;
+  homeVariant?: "link" | "button";
   allowSignUp?: boolean;
   allowedMethods?: AuthMethod[];
   methodSelectionMode?: "tabs" | "fallback";
@@ -62,6 +64,8 @@ export function AuthForm({
   infoItems,
   homeHref = "/",
   homeLabel = "Go back home",
+  homePrompt = "Need another entry point?",
+  homeVariant = "link",
   allowSignUp = true,
   allowedMethods = ["email", "sms"],
   methodSelectionMode = "tabs",
@@ -286,6 +290,12 @@ export function AuthForm({
   const isCustomer = audience === "customer";
   const shouldShowConsent = isCustomer && mode === "sign_up";
   const customerFullName = `${firstName} ${lastName}`.trim();
+  const homeClassName =
+    homeVariant === "button"
+      ? "mt-6 inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+      : "font-semibold text-orange-600";
+  const isExternalHomeHref =
+    homeHref.startsWith("mailto:") || homeHref.startsWith("http://") || homeHref.startsWith("https://");
 
   return (
     <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -575,12 +585,33 @@ export function AuthForm({
           ) : null}
         </form>
 
-        <p className="mt-6 text-sm text-slate-500">
-          Need another entry point?{" "}
-          <Link href={homeHref} className="font-semibold text-orange-600">
-            {homeLabel}
-          </Link>
-        </p>
+        {homeVariant === "button" ? (
+          <div className="mt-6 space-y-2">
+            <p className="text-sm text-slate-500">{homePrompt}</p>
+            {isExternalHomeHref ? (
+              <a href={homeHref} className={homeClassName}>
+                {homeLabel}
+              </a>
+            ) : (
+              <Link href={homeHref} className={homeClassName}>
+                {homeLabel}
+              </Link>
+            )}
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-slate-500">
+            {homePrompt}{" "}
+            {isExternalHomeHref ? (
+              <a href={homeHref} className={homeClassName}>
+                {homeLabel}
+              </a>
+            ) : (
+              <Link href={homeHref} className={homeClassName}>
+                {homeLabel}
+              </Link>
+            )}
+          </p>
+        )}
       </section>
     </div>
   );

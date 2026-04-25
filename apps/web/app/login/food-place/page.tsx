@@ -15,8 +15,10 @@ export default function FoodPlaceLoginPage() {
             "Manage restaurant details, menu categories, items, and incoming orders.",
             "If you need account setup help, contact Dalbo support.",
           ]}
-          homeHref="/login"
-          homeLabel="Choose another login type"
+          homeHref="mailto:support@dalbo.app?subject=Request%20restaurant%20account"
+          homeLabel="Request restaurant account"
+          homePrompt="Need a new restaurant account?"
+          homeVariant="button"
           allowSignUp={false}
           allowedMethods={["email"]}
         />

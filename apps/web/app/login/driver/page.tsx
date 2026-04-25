@@ -18,8 +18,10 @@ export default function DriverLoginPage() {
             "If you need a new driver account, contact Dalbo support or your dispatcher.",
           ]}
           signInAcknowledgementLabel="I understand that Dalbo does not provide delivery insurance. I am responsible for my own insurance coverage while delivering food to customers."
-          homeHref="/login"
-          homeLabel="Choose another login type"
+          homeHref="mailto:support@dalbo.app?subject=Request%20driver%20account"
+          homeLabel="Request driver account"
+          homePrompt="Need a new driver account?"
+          homeVariant="button"
           allowSignUp={false}
           allowedMethods={["email"]}
         />
