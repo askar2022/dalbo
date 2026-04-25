@@ -288,12 +288,12 @@ export default function HomePage() {
                     <article
                       className="mx-auto flex h-full w-full max-w-[340px] flex-col rounded-[36px] border border-slate-200 bg-[#fff7f1] p-5 transition duration-200 hover:-translate-y-1 xl:min-h-[640px]"
                     >
-                      <div className="flex min-h-[390px] items-start justify-center pb-4">
+                      <div className="flex min-h-[350px] items-start justify-center">
                         <div className="mx-auto w-full max-w-[240px]">
                         <JourneyPhone view={step.view} />
                         </div>
                       </div>
-                      <div className="flex flex-1 flex-col px-2 pb-3 pt-10 sm:px-3">
+                      <div className="flex flex-1 flex-col px-2 pb-3 pt-4 sm:px-3">
                         <div className="flex items-center gap-3">
                           <span className="text-sm font-semibold uppercase tracking-[0.25em] text-orange-500">
                             {step.step}
@@ -368,6 +368,9 @@ export default function HomePage() {
               </p>
               <p className="text-sm font-medium text-orange-200">
                 Fast delivery. Trusted local partners.
+              </p>
+              <p className="text-sm leading-6 text-slate-300">
+                Designed and implemented by Dr. Abdimalik Askar, powered by Automation, LLC.
               </p>
             </div>
 

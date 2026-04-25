@@ -1,9 +1,11 @@
 import { AuthForm } from "../../../components/auth-form";
+import { PartnerLoginHeader } from "../../../components/partner-login-header";
 
 export default function DriverLoginPage() {
   return (
     <main className="min-h-screen bg-[#fffaf5] px-6 py-12 text-[#0b1020]">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto flex max-w-6xl flex-col gap-10">
+        <PartnerLoginHeader current="driver" />
         <AuthForm
           audience="driver"
           badge="Driver login"
