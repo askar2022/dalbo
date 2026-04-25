@@ -60,9 +60,6 @@ export default function AboutDalboPage() {
 
         <section className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
           <div className="space-y-6">
-            <span className="inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-              About Dalbo
-            </span>
             <div className="space-y-4">
               <h1 className="max-w-4xl text-5xl font-bold tracking-tight sm:text-6xl">
                 Dalbo is built to make delivery operations feel simple, modern, and connected.

@@ -230,10 +230,6 @@ export default function HomePage() {
 
         <section className="space-y-8">
           <div className="space-y-7">
-            <span className="inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-              Food delivery platform
-            </span>
-
             <div className="space-y-5">
               <h1 className="max-w-3xl text-5xl font-bold tracking-tight sm:text-6xl">
                 Good food, delivered faster with one connected Dalbo platform.
