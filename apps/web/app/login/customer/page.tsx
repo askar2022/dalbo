@@ -8,17 +8,19 @@ export default function CustomerLoginPage() {
           audience="customer"
           badge="Start ordering"
           title="Order from your favorite food places and track every delivery step."
-          description="Sign in to browse menus, save your delivery address, and place your next Dalbo order."
+          description="Create your account with your name, phone number, email, and password, then sign in with your email and password whenever you want to order."
           infoTitle="What you can do here"
           infoItems={[
             "Browse restaurants and available menu items.",
-            "Use email or SMS code to continue securely.",
+            "Sign up with first name, last name, phone number, email, and password.",
+            "Use your email and password as your only customer sign-in method.",
+            "Check your email after sign-up to verify your new account with Dalbo.",
             "Place orders and track status updates in one place.",
           ]}
           homeHref="/login"
           homeLabel="Choose another login type"
           allowSignUp={true}
-          allowedMethods={["email", "sms"]}
+          allowedMethods={["email"]}
         />
       </div>
     </main>

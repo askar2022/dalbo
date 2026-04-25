@@ -9,6 +9,15 @@ import { getSupabaseBrowserClient } from "../lib/supabase-browser";
 type AuthMode = "sign_in" | "sign_up";
 type AuthMethod = "email" | "sms";
 type AuthAudience = "customer" | "driver" | "food_place";
+type SecurityAlertEvent = "sign_in" | "account_created";
+type SendSecurityAlertOptions = {
+  eventType: SecurityAlertEvent;
+  accessToken?: string;
+  userId?: string;
+  email?: string;
+  displayName?: string;
+  audience?: AuthAudience;
+};
 
 type ProfileRow = {
   role: "customer" | "driver" | "food_place" | "admin";
@@ -25,6 +34,7 @@ type AuthFormProps = {
   homeLabel?: string;
   allowSignUp?: boolean;
   allowedMethods?: AuthMethod[];
+  methodSelectionMode?: "tabs" | "fallback";
 };
 
 async function fetchUserRole(userId: string) {
@@ -53,12 +63,15 @@ export function AuthForm({
   homeLabel = "Go back home",
   allowSignUp = true,
   allowedMethods = ["email", "sms"],
+  methodSelectionMode = "tabs",
 }: AuthFormProps) {
   const router = useRouter();
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const [mode, setMode] = useState<AuthMode>("sign_in");
   const [method, setMethod] = useState<AuthMethod>(allowedMethods[0] ?? "email");
   const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [phone, setPhone] = useState("");
@@ -67,6 +80,46 @@ export function AuthForm({
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function sendSecurityAlert({
+    eventType,
+    accessToken,
+    userId,
+    email: alertEmail,
+    displayName,
+    audience: alertAudience,
+  }: SendSecurityAlertOptions) {
+    if (!accessToken && !(eventType === "account_created" && userId && alertEmail)) {
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/auth/security-alert", {
+        method: "POST",
+        headers: accessToken
+          ? {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            }
+          : {
+              "Content-Type": "application/json",
+            },
+        body: JSON.stringify({
+          eventType,
+          userId,
+          email: alertEmail,
+          displayName,
+          audience: alertAudience,
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Unable to send security alert.");
+      }
+    } catch (error) {
+      console.error("Unable to send security alert.", error);
+    }
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -81,7 +134,17 @@ export function AuthForm({
             phone,
             options: {
               shouldCreateUser: mode === "sign_up",
-              data: mode === "sign_up" ? { full_name: fullName } : undefined,
+              data:
+                mode === "sign_up"
+                  ? isCustomer
+                    ? {
+                        first_name: firstName,
+                        last_name: lastName,
+                        full_name: customerFullName,
+                        phone,
+                      }
+                    : { full_name: fullName }
+                  : undefined,
             },
           });
 
@@ -90,7 +153,7 @@ export function AuthForm({
           }
 
           setOtpStep("verify");
-          setSuccessMessage("A 6-digit code was sent. Enter it below to continue.");
+          setSuccessMessage("We sent a 6-digit code to your phone. Enter it below to continue.");
           return;
         }
 
@@ -111,7 +174,8 @@ export function AuthForm({
           throw new Error("SMS verification completed, but no session was created.");
         }
 
-          const role = await fetchUserRole(user.id);
+        await sendSecurityAlert({ eventType: "sign_in", accessToken: session.access_token });
+        const role = await fetchUserRole(user.id);
         router.replace(getDashboardRoute(role));
         router.refresh();
         return;
@@ -127,7 +191,16 @@ export function AuthForm({
           password,
           options: {
             data: {
-              full_name: fullName,
+              ...(isCustomer
+                ? {
+                    first_name: firstName,
+                    last_name: lastName,
+                    full_name: customerFullName,
+                    phone,
+                  }
+                : {
+                    full_name: fullName,
+                  }),
             },
           },
         });
@@ -137,12 +210,25 @@ export function AuthForm({
         }
 
         if (!data.session) {
-          setSuccessMessage("Account created. If email confirmation is enabled, confirm your email and then sign in.");
+          await sendSecurityAlert({
+            eventType: "account_created",
+            userId: data.user?.id,
+            email: data.user?.email ?? email,
+            displayName: isCustomer ? customerFullName : fullName,
+            audience,
+          });
+          setSuccessMessage(
+            "Account created. Check your email for Dalbo's verification message, then sign in with your password.",
+          );
           setMode("sign_in");
           return;
         }
 
         const signedInUser = data.user ?? data.session.user;
+        await sendSecurityAlert({
+          eventType: "account_created",
+          accessToken: data.session.access_token,
+        });
         const role = await fetchUserRole(signedInUser.id);
         router.replace(getDashboardRoute(role));
         router.refresh();
@@ -159,6 +245,7 @@ export function AuthForm({
       }
 
       const signedInUser = data.user ?? data.session.user;
+      await sendSecurityAlert({ eventType: "sign_in", accessToken: data.session.access_token });
       const role = await fetchUserRole(signedInUser.id);
       router.replace(getDashboardRoute(role));
       router.refresh();
@@ -186,6 +273,12 @@ export function AuthForm({
     setOtpCode("");
     resetMessages();
   }
+
+  const showMethodTabs = allowedMethods.length > 1 && methodSelectionMode === "tabs";
+  const showMethodFallback = allowedMethods.length > 1 && methodSelectionMode === "fallback";
+  const isCustomer = audience === "customer";
+  const shouldShowConsent = isCustomer && mode === "sign_up";
+  const customerFullName = `${firstName} ${lastName}`.trim();
 
   return (
     <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
@@ -237,7 +330,7 @@ export function AuthForm({
           ) : null}
         </div>
 
-        {allowedMethods.length > 1 ? (
+        {showMethodTabs ? (
           <div className="mt-4 flex rounded-full bg-slate-100 p-1 text-sm font-medium">
             <button
               type="button"
@@ -260,24 +353,67 @@ export function AuthForm({
           </div>
         ) : null}
 
+        {isCustomer ? (
+          <div className="mt-4 rounded-2xl border border-orange-100 bg-orange-50 px-4 py-3 text-sm text-slate-700">
+            <p>
+              Create your customer account with your name, phone number, email, and password. After
+              sign-up, check your email to verify your account with Dalbo.
+            </p>
+          </div>
+        ) : null}
+
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           {mode === "sign_up" ? (
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">Full name</span>
-              <input
-                value={fullName}
-                onChange={(event) => setFullName(event.target.value)}
-                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
-                placeholder={
-                  audience === "customer"
-                    ? "Your full name"
-                    : audience === "driver"
-                      ? "Driver full name"
-                      : "Business owner name"
-                }
-                required
-              />
-            </label>
+            isCustomer ? (
+              <>
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-700">First name</span>
+                    <input
+                      value={firstName}
+                      onChange={(event) => setFirstName(event.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                      placeholder="First name"
+                      required
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-slate-700">Last name</span>
+                    <input
+                      value={lastName}
+                      onChange={(event) => setLastName(event.target.value)}
+                      className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                      placeholder="Last name"
+                      required
+                    />
+                  </label>
+                </div>
+
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-slate-700">Phone number</span>
+                  <input
+                    type="tel"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                    placeholder="+15551234567"
+                    required
+                  />
+                </label>
+              </>
+            ) : (
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">Full name</span>
+                <input
+                  value={fullName}
+                  onChange={(event) => setFullName(event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none transition focus:border-orange-400"
+                  placeholder={audience === "driver" ? "Driver full name" : "Business owner name"}
+                  required
+                />
+              </label>
+            )
           ) : null}
 
           {method === "email" ? (
@@ -312,6 +448,17 @@ export function AuthForm({
                   required
                 />
               </label>
+
+              {mode === "sign_in" ? (
+                <div className="text-right">
+                  <Link
+                    href={`/login/reset-password${email ? `?email=${encodeURIComponent(email)}` : ""}`}
+                    className="text-sm font-semibold text-orange-600"
+                  >
+                    Forgot password?
+                  </Link>
+                </div>
+              ) : null}
             </>
           ) : (
             <>
@@ -363,7 +510,7 @@ export function AuthForm({
               ? "Please wait..."
               : method === "sms"
                 ? otpStep === "request"
-                  ? "Send SMS code"
+                  ? "Send 6-digit code"
                   : "Verify code"
                 : mode === "sign_in"
                   ? audience === "customer"
@@ -375,6 +522,16 @@ export function AuthForm({
                     ? "Create customer account"
                     : "Create account"}
           </button>
+
+          {showMethodFallback ? (
+            <button
+              type="button"
+              onClick={() => switchMethod(method === "email" ? "sms" : "email")}
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+            >
+              {method === "email" ? "Use phone with a 6-digit code instead" : "Use email and password instead"}
+            </button>
+          ) : null}
 
           {method === "sms" && otpStep === "verify" ? (
             <button
@@ -388,6 +545,13 @@ export function AuthForm({
             >
               Change phone or resend
             </button>
+          ) : null}
+
+          {shouldShowConsent ? (
+            <p className="text-sm leading-6 text-slate-500">
+              By continuing, you agree to receive account verification and account-related messages
+              from Dalbo by email. We may also use your phone number for account and order updates.
+            </p>
           ) : null}
         </form>
 
