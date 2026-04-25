@@ -25,7 +25,7 @@ type ProfileRow = {
 
 type AuthFormProps = {
   audience: AuthAudience;
-  badge: string;
+  badge?: string;
   title: string;
   description: string;
   infoTitle: string;
@@ -300,9 +300,11 @@ export function AuthForm({
   return (
     <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
       <section className="space-y-6">
-        <span className="inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
-          {badge}
-        </span>
+        {badge ? (
+          <span className="inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-600">
+            {badge}
+          </span>
+        ) : null}
         <div className="space-y-4">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{title}</h1>
           <p className="max-w-2xl text-lg text-slate-600">{description}</p>

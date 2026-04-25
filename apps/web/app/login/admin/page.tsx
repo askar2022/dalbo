@@ -8,7 +8,6 @@ export default function AdminLoginPage() {
         <PartnerLoginHeader current="admin" />
         <AuthForm
           audience="admin"
-          badge="Admin login"
           title="Sign in to monitor the Dalbo platform, orders, drivers, restaurants, and ratings."
           description="This page is reserved for Dalbo admins who need platform-wide visibility across operations and partner activity."
           infoTitle="Admin access"

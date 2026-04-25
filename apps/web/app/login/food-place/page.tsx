@@ -8,7 +8,6 @@ export default function FoodPlaceLoginPage() {
         <PartnerLoginHeader current="food_place" />
         <AuthForm
           audience="food_place"
-          badge="Food Place login"
           title="Sign in to manage menus, incoming orders, and preparation flow."
           description="This page is for restaurant and food place partners who manage Dalbo orders and menu operations."
           infoTitle="Partner access"

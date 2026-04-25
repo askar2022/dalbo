@@ -8,7 +8,6 @@ export default function DriverLoginPage() {
         <PartnerLoginHeader current="driver" />
         <AuthForm
           audience="driver"
-          badge="Driver login"
           title="Sign in to go online, accept delivery jobs, and complete active trips."
           description="Use your Dalbo driver account to see ready pickups, manage active deliveries, and move each order from pickup to dropoff."
           infoTitle="Driver access"

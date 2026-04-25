@@ -47,7 +47,6 @@ export default function CustomerLoginPage() {
         </header>
         <AuthForm
           audience="customer"
-          badge="Start ordering"
           title="Order from your favorite food places and track every delivery step."
           description="Create your account with your name, phone number, email, and password, then sign in with your email and password whenever you want to order."
           infoTitle="What you can do here"
