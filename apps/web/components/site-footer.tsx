@@ -18,10 +18,10 @@ export function SiteFooter() {
           <div className="space-y-5">
             <Link href="/" className="inline-flex items-center">
               <Image
-                src="/logo_dalbo.png"
+                src="/logo_dalbo.svg"
                 alt="Dalbo logo"
-                width={170}
-                height={52}
+                width={220}
+                height={64}
                 className="h-12 w-auto object-contain brightness-0 invert"
               />
             </Link>
