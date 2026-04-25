@@ -318,20 +318,20 @@ export function AuthForm({
       </section>
 
       <section className="rounded-[32px] border border-slate-200 bg-white p-8">
-        <div className="flex rounded-full bg-slate-100 p-1 text-sm font-medium">
-          <button
-            type="button"
-            onClick={() => {
-              setMode("sign_in");
-              resetMessages();
-            }}
-            className={`flex-1 rounded-full px-4 py-2 ${
-              mode === "sign_in" ? "bg-[#0b1020] text-white" : "text-slate-600"
-            }`}
-          >
-            Sign in
-          </button>
-          {allowSignUp ? (
+        {allowSignUp ? (
+          <div className="flex rounded-full bg-slate-100 p-1 text-sm font-medium">
+            <button
+              type="button"
+              onClick={() => {
+                setMode("sign_in");
+                resetMessages();
+              }}
+              className={`flex-1 rounded-full px-4 py-2 ${
+                mode === "sign_in" ? "bg-[#0b1020] text-white" : "text-slate-600"
+              }`}
+            >
+              Sign in
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -344,8 +344,12 @@ export function AuthForm({
             >
               Sign up
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : (
+          <div className="rounded-full bg-[#0b1020] px-4 py-3 text-center text-sm font-medium text-white">
+            Please enter your email and password
+          </div>
+        )}
 
         {showMethodTabs ? (
           <div className="mt-4 flex rounded-full bg-slate-100 p-1 text-sm font-medium">
